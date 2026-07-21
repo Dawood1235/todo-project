@@ -93,12 +93,11 @@ h1{
 
 .btns{
     
-    position: fixed;
-    bottom: 20px;
+    position: static;
+    margin-bottom: 10px;
     /* left: 50%; */
-    transform: translateX(50%);
     display: flex;
-    justify-content: center;
+    justify-content: center; 
     gap: 0px;
 }
 /* #editForm{

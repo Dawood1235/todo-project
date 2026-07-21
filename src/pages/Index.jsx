@@ -17,7 +17,7 @@ export default function Homepage() {
 
     const [lastDoc, setLastDoc] = useState(null);
 
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
 
     const [filteredtasks, setFilteredTasks] = useState([]);
@@ -33,7 +33,7 @@ export default function Homepage() {
     const page_size = 5;
 
     const fetchTasks = async (searchText = "", cursor = null) => {
-        setLoading(true);
+        searchText = searchText.trim().toLowerCase();
         try {
 
             let q = "";
@@ -42,7 +42,7 @@ export default function Homepage() {
                 q = query(
                     collection(db, "tasks"),
                     where("uid", "==", auth.currentUser.uid),
-                    orderBy("task"),
+                    orderBy("taskLower"),
                     limit(page_size)
                 );
             }
@@ -50,7 +50,7 @@ export default function Homepage() {
                 q = query(
                     collection(db, "tasks"),
                     where("uid", "==", auth.currentUser.uid),
-                    orderBy("task"),
+                    orderBy("taskLower"),
                     startAt(searchText),
                     endAt(searchText + "\uf8ff"),
                     limit(page_size)
@@ -61,7 +61,7 @@ export default function Homepage() {
                     q = query(
                         collection(db, "tasks"),
                         where("uid", "==", auth.currentUser.uid),
-                        orderBy("task"),
+                        orderBy("taskLower"),
                         startAfter(cursor),
                         limit(page_size)
                     );
@@ -69,7 +69,7 @@ export default function Homepage() {
                     q = query(
                         collection(db, "tasks"),
                         where("uid", "==", auth.currentUser.uid),
-                        orderBy("task"),
+                        orderBy("taskLower"),
                         startAt(searchText),
                         endAt(searchText + "\uf8ff"),
                         startAfter(cursor),
@@ -77,14 +77,20 @@ export default function Homepage() {
                     )
                 }
             }
+            console.log("Search text:", searchText);
+
         console.log("Current User UID:", auth.currentUser?.uid);
         const snapshot = await getDocs(q);
 
         console.log("Documents found:", snapshot.size);
 
-        snapshot.forEach(doc => {
-            console.log(doc.id, doc.data());
+        snapshot.docs.forEach(doc => {
+    console.table(doc.data());
         });
+
+        // snapshot.forEach(doc => {
+        //     console.log(JSON.stringify(doc.data(), null, 2));
+        // });
 
         const list = snapshot.docs.map(doc => ({
             id: doc.id,
@@ -101,13 +107,17 @@ export default function Homepage() {
         }
         } catch(error){
             console.log(error);
-        } finally {
-                setLoading(false);
-            }
+        } finally{
+            console.log("loading done");
+            setLoading(false);
+        }
         };
 
    
     useEffect(() => {
+        if (!auth.currentUser) {
+    return;
+    }        
         const delay = setTimeout(() => {
             setCurrentPage(1);
             setPageCursors([null]);
@@ -120,9 +130,9 @@ export default function Homepage() {
                 countQuery = query(
                     collection(db,"tasks"),
                     where("uid","==",auth.currentUser.uid),
-                    orderBy("task"),
-                    startAt(search),
-                    endAt(search + "\uf8ff")
+                    orderBy("taskLower"),
+                    startAt(search.toLowerCase()),
+                    endAt(search.toLowerCase() + "\uf8ff")
                 );
             }
         const getTaskCount = async () => {
@@ -135,8 +145,17 @@ export default function Homepage() {
                 console.error("Error getting count: ", error);
             }
         };
-            getTaskCount();
-            fetchTasks(search);
+        const loadData = async () => {
+            console.log("loading began");
+            await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
+
+            await getTaskCount();
+            await fetchTasks(search);
+                console.log("Loading finished");
+
+            setLoading(false);
+        }
+        loadData();
 
         }, 300)
 
@@ -248,11 +267,16 @@ export default function Homepage() {
         navigate("/Signin");
 
     };
+    console.log("page loading");
+    if(loading){
+                // return <h1 style={{ color: "red" }}>LOADING...</h1>;
+            return <SPLoader />
+            }
 
     return (
         <div className="homepage">
             <h1>Your Tasks</h1>
-            {loading && <SPLoader />}
+            
             <div id="adtbtn">
                 <input type="text" placeholder="Enter the task to search"
                     value={search}
