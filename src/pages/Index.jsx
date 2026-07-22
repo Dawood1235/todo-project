@@ -347,9 +347,12 @@ export default function Homepage() {
             <div id="adtbtn">
                 <input type="text" placeholder="Enter the task to search"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)} />
+                    onChange={(e) => setSearch(e.target.value)} 
+                    style={{marginLeft: "80px", align: "left"}}/>
                 <Link to="/pages/Add">
-                    <button id="adtsk">
+                    <button id="adtsk"
+                    style = {{backgroundColor: "#1C2A27", color:"white"}}
+                    >
                         Add Tasks
                     </button>
                 </Link>
@@ -374,14 +377,18 @@ export default function Homepage() {
                         <p>Priority: {task.priority}</p>
                         <p>Progress: {task.progress}%</p>
                         <p>Link: {task.link}</p>
-                        <div id="tskbtns">
-                            <button onClick={() => handleEdit(task)}>
+                            <button 
+                            onClick={() => handleEdit(task)}
+                            style={{backgroundColor: '#1C2A27', color: 'white', marginRight: "5px"}}
+                            >
                                 Edit
                             </button>
-                            <button onClick={() => handledelete(task.id)}>
+                            <button 
+                            onClick={() => handledelete(task.id)}
+                            style={{backgroundColor: '#1C2A27', color: 'white'}}
+                            >
                                 Delete
                             </button>
-                        </div>
                     </div>
                 </div>
 
@@ -547,7 +554,9 @@ export default function Homepage() {
                 </div>
             )}
             <div className="btns">
-                <button onClick={previousPage}>
+                <button onClick={previousPage}
+                 style = {{backgroundColor: "#1C2A27", color:"white"}}
+                >
                     Previous
                 </button>
 
@@ -563,11 +572,16 @@ export default function Homepage() {
 
 
                 <button onClick={nextPage}
+                    style = {{backgroundColor: "#1C2A27", color:"white"}}
                     disabled={!lastDoc || currentPage >= count_pages}>
                     Next
                 </button>
+
                 <div className='hlogout1'>
-                    <button onClick={handleLogout}> Logout </button>
+                    <button onClick={handleLogout}
+                    style = {{backgroundColor: "#1C2A27", color:"white", position:'absolute', right:'80px'}}
+                    > Logout 
+                    </button>
                 </div>
             </div>
         </div >

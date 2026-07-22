@@ -237,11 +237,10 @@ th{
   border-radius: 5px;
 }*/
 
-/* .task-btns{
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-} */
+#tskbtns{
+    background-color: #1C2A27;
+    color: white;
+}    
 
 /* #todofrm label{
     text-align:center;
