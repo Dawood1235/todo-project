@@ -4,9 +4,12 @@ import { addDoc, collection } from 'firebase/firestore';
 import { db } from "../firebase";
 import { auth } from "../firebase";
 import * as yup from "yup";
+import { serverTimestamp } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 import { Card, Button } from "react-bootstrap";
 
 export default function AddData() {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
@@ -64,11 +67,14 @@ export default function AddData() {
                 reminder,
                 progress: prg,
                 link,
-                uid: auth.currentUser.uid
+                uid: auth.currentUser.uid,
+
+                createdAt: serverTimestamp()
             });
             setLoading(false);
             setErrors({});
             alert("Task added successfully!");
+            navigate("/");
             console.log("Document ID:", docRef.id);
         } catch (error) {
             if(error instanceof yup.ValidationError){
@@ -112,23 +118,22 @@ export default function AddData() {
     //     link
     // }
 
-    if (loading) {
-        return <h1>Adding your Task...</h1>
-    }
 
     return (
-        <div className="d-flex justify-content-center align-items-center color-dark text-white vh:100">
+        <div className="d-flex flex-column align-items-center color-blue vh:100">
             {/* <Card className="p-4 shadow" style={{width: "500px" , backgroundColor: "rgb(189, 174, 174)"}}> */}
-            <h2>Add New Tasks</h2>
+            <h2 >Add New Tasks</h2>
 
-            <form id="todofrm" className="card my-card"
+            <form id="todofrm" className="card my-card p-4 mb-4"
                 style={{ backgroundColor: "rgb(189, 174, 174)", width: "400px" }}
                 onSubmit={handleSubmit}>
 
                 <label htmlFor="task">Task:</label><br />
                 <input type="text"
                     value={task}
-                    onChange={(e) => setTask(e.target.value)}
+                    onChange={(e) =>{ setTask(e.target.value);
+                        setErrors((prev)=> ({ ...prev, task:""}));
+                    }}
                     placeholder="Enter the task" id="task" />
                     {errors.task && <p style={{ color: "red" }}>{errors.task}</p>}
                 <br /><br />
@@ -136,7 +141,9 @@ export default function AddData() {
                 <label htmlFor="description">Description:</label><br />
                 <textarea id="description"
                     value={description}
-                    onChange={(e) => setDesc(e.target.value)}
+                    onChange={(e) => {setDesc(e.target.value);
+                             setErrors((prev)=> ({ ...prev, description:""}));
+                    }}
                     placeholder="Write task details"></textarea>
                     {errors.description && <p style={{ color: "red" }}>{errors.description}</p>}
                 <br /><br />
@@ -144,7 +151,9 @@ export default function AddData() {
                 <label htmlFor="date">Task Date:</label><br />
                 <input type="date"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(e) => {setDate(e.target.value);
+                            setErrors((prev)=> ({ ...prev, date:""}));
+                    }}
                     id="date" />
                     {errors.date && <p style={{ color: "red" }}>{errors.date}</p>}
                 <br /><br />
@@ -154,7 +163,7 @@ export default function AddData() {
                     value={time}
                     onChange={(e) => {
                         setTime(e.target.value);
-                        console.log("Selected time:", e.target.value);
+                        setErrors((prev)=> ({ ...prev, time:""}));
                     }}
                     id="time" />
                     {errors.time && <p style={{ color: "red" }}>{errors.time}</p>}
@@ -163,7 +172,9 @@ export default function AddData() {
                 <label htmlFor="category">Category:</label><br />
                 <select id="category"
                     value={category}
-                    onChange={(e) => setCat(e.target.value)}
+                    onChange={(e) => {setCat(e.target.value);
+                                    setErrors((prev)=> ({ ...prev, category:""}));
+                    }}
                 >
                     <option>Work</option>
                     <option>Study</option>
@@ -174,34 +185,68 @@ export default function AddData() {
                 <br /><br />
 
                 <label>Priority:</label><br />
-                <input type="radio" name="priority" value="High"
-                    checked = {priority === "High"}
-                    onChange={(e) => setPrty(e.target.value)}
-                /> High
-                <input type="radio" name="priority" value="Medium"
-                    checked = {priority === "Medium"}
-                    onChange={(e) => setPrty(e.target.value)}
-                /> Medium
-                <input type="radio" name="priority" value="Low"
-                    checked = {priority === "Low"}
-                    onChange={(e) => setPrty(e.target.value)}
-                />
-                Low
+                <div className="priority-option">
+                    <label>
+                        <input type="radio" 
+                            name="priority"
+                            value="High"
+                            checked = {priority === "High"}
+                            onChange={(e) => {setPrty(e.target.value);
+                                          setErrors((prev)=> ({ ...prev, priority:""}));
+
+                            }}
+                        /> High
+                    </label>
+                </div>
+                <div className="priority-option">
+                    <label>
+                        <input type="radio" 
+                            name="priority"
+                            value="Medium"
+                            checked = {priority === "Medium"}
+                            onChange={(e) =>{ setPrty(e.target.value)
+                                         setErrors((prev)=> ({ ...prev, priority:""}));
+                            }}
+                        /> Medium
+                    </label>
+                </div>
+                <div className="priority-option">
+                    <label>
+                        <input type="radio" 
+                            name="priority"
+                            value="Low"
+                            checked = {priority === "Low"}
+                            onChange={(e) =>{ setPrty(e.target.value);
+                                     setErrors((prev)=> ({ ...prev, priority:""}));
+                            }}
+                        /> Low
+                    </label>
+                </div>
                 {errors.priority && <p style={{ color: "red" }}>{errors.priority}</p>}
                 <br /><br />
 
-                <label htmlFor="reminder">Reminder:</label><br />
-                <input type="checkbox" id="reminder"
-                    checked={reminder}
-                    onChange={(e) => setRem(e.target.checked)} />
+                <label>Reminder:</label><br />
+                <div className="rem-opt">
+                    <label>
+                        <input 
+                            type="checkbox" id="reminder"
+                            checked={reminder}
+                            onChange={(e) => {setRem(e.target.checked);
+                                    setErrors((prev)=> ({ ...prev, reminder:""}));
 
-                <label htmlFor="reminder"> Enable reminder</label>
+                            }}
+                            />
+                            Enable Reminder
+                    </label>
+                </div>
                 <br /><br />
 
                 <label htmlFor="progress">Progress:</label><br />
                 <input type="range"
                     value={prg}
-                    onChange={(e) => setPrg(Number(e.target.value))}
+                    onChange={(e) => {setPrg(Number(e.target.value))
+                            setErrors((prev)=> ({ ...prev, progress:""}));
+                    }}
                     id="progress" min="0" max="100" />
                     {errors.progress && <p style={{ color: "red" }}>{errors.progress}</p>}
                 <br /><br />
@@ -209,12 +254,20 @@ export default function AddData() {
                 <label htmlFor="link">Related Link:</label><br />
                 <input type="url" id="link"
                     value={link}
-                    onChange={(e) => setLink(e.target.value)}
+                    onChange={(e) => {setLink(e.target.value)
+                         setErrors((prev)=> ({ ...prev, link:""}));
+                    }}
+                    
                     placeholder="https:example.com" />
                     {errors.link && <p style={{ color: "red" }}>{errors.link}</p>}
                 <br /><br />
 
-                <Submit />
+                    <Submit />
+                    {loading && (
+                         <p style={{ color: "blue", textAlign: "center" }}>
+                        Loading...
+                        </p>)}
+
 
             </form>
             {/* </Card> */}

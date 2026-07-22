@@ -53,6 +53,28 @@ h1{
     border-radius: 10px;
 }  */
 
+.priority-option input[type="radio"]{
+    width: auto;
+    margin-right: 8px;
+}
+
+input[type="checkbox"]{
+    width: auto;
+}
+
+
+.rem-opt{
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: fit-content;
+}
+
+.rem-opt input[type="checkbox"]{
+    width: auto;
+    margin-right: 8px;
+}
+
 .homepage{
     min-height: 100vh; 
     display: flex;
@@ -60,18 +82,38 @@ h1{
 
 }
 
-#adtbtn{
+/* #adtbtn{
     display: flex;
     justify-content: flex-end;
     text-decoration: none;
-}
+} */
 
 #tsklst{
+    /* max-width: 450px;
+    margin: 0 auto; */
     padding: 5px 5px 5px 15px; 
     margin: 5px;
     border-radius: 5px;
     background-color:rgb(32, 224, 224);
 }
+
+.task-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.my-card{
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+#addbtn{
+    background-color: #1A1A1A;
+    color: white;
+    font-weight: bold;
+    border-radius: 10px;
+} 
 
 #tskbtns{
     display: flex;
@@ -87,9 +129,16 @@ h1{
 
 .my-card{
     margin-inline: auto;
-    display:grid;
     background: rgb(189, 174, 174);
 }
+
+.priority-option {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: fit-content;
+}
+
 
 .btns{
     
