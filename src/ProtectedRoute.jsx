@@ -36,7 +36,6 @@ import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 import { useEffect, useState } from "react";
-import { useNavigate } from 'react-router-dom';
 
 
 function ProtectedRoute({children,role}){
@@ -46,8 +45,6 @@ function ProtectedRoute({children,role}){
     const [allowed,setAllowed]=useState(false);
 
     const [authenticated,setAuthenticated] = useState(false);
-
-    const navigate = useNavigate();
 
     useEffect(()=>{
 
@@ -79,18 +76,10 @@ function ProtectedRoute({children,role}){
                 console.log("Firestore role:", data.role);
                 console.log("Required role:", role);
 
-                if( data.role === 'admin'){
+                if( data.role === role){
 
                     setAllowed(true);
-                    navigate("/pages/Admin-dashboard");
-
                 }
-
-                else if(data.role === 'user'){
-                    setAllowed(true);
-                    navigate("/");
-                }
-
                 else{
 
                     setAllowed(false);

@@ -45,6 +45,14 @@ h1{
     border-radius: 10px;
 }
 
+
+#lgstbtns button {
+    margin-top: 20px;
+    margin-right: 10px;
+    justify-content: space-between;
+    background-color: #1C2A27;
+    color: white;
+}
 /* .viewbtn{
     height: 40px;
     background-color: rgb(7, 7, 41);
@@ -237,10 +245,10 @@ th{
   border-radius: 5px;
 }*/
 
-#tskbtns{
+/* #tskbtns{
     background-color: #1C2A27;
     color: white;
-}    
+}     */
 
 /* #todofrm label{
     text-align:center;

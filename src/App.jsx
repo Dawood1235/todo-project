@@ -3,6 +3,7 @@ import "./App.css";
 import SignUpPage from "./pages/Signup";
 import SignInPage from "./pages/Signin";
 import ProtectedRoute from "./ProtectedRoute";
+import PublicOnlyRoute from "./PublicOnlyRoute";
 import {auth} from './firebase';
 // import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getDatabase, ref, set } from 'firebase/database';
@@ -12,6 +13,7 @@ import Homepage from './pages/Index';
 import AddData from "./pages/Add";
 import { FirebaseError } from "firebase/app";
 import Unauthorized from "./unauthorized";
+import Statistics from "./Statistics";
 import AdminDashboard from "./pages/Admin-dashboard";
 
 
@@ -23,10 +25,17 @@ return(
 <BrowserRouter>
 
 <Routes>
+<Route path="/signup" element={<PublicOnlyRoute>
+<SignUpPage/>
+</PublicOnlyRoute>
+}
+/>
 
-<Route path="/signup" element={<SignUpPage/>}/>
-
-<Route path="/signin" element={<SignInPage/>}/>
+<Route path="/signin" element={<PublicOnlyRoute>
+<SignInPage/>
+</PublicOnlyRoute>
+}
+/>
 
 <Route
 path="/"
@@ -51,6 +60,15 @@ path="/pages/Admin-dashboard"
 element={
 <ProtectedRoute role="admin">
     <AdminDashboard />
+</ProtectedRoute>
+}
+/>
+
+<Route
+path="/Statistics"
+element={
+<ProtectedRoute role="admin">
+    <Statistics />
 </ProtectedRoute>
 }
 />

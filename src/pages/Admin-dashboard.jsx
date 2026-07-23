@@ -5,7 +5,7 @@ import { signOut } from "firebase/auth";
 
 import { useNavigate } from "react-router-dom";
 import SPLoader from "./Loader";
-
+import {Link} from "react-router-dom";
 import {
   collection,
   getDocs
@@ -48,7 +48,7 @@ const AdminDashboard = ({role}) => {
                     });
 
                 });
-
+                console.log("Users fetched:", usersArray);
                 setUsers(usersArray);
 
             }
@@ -105,8 +105,14 @@ const AdminDashboard = ({role}) => {
                 </tbody>
 
             </table>
-
+            
+            <div id="lgstbtns">
             <button onClick = {handleLogout} >Logout </button>
+
+            <Link to="/Statistics">
+            <button>Statistics </button>
+            </Link>
+            </div>
 
         </div>
 
