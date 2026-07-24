@@ -1,8 +1,7 @@
 import { useEffect,useState } from "react";
 import {Doughnut,Bar } from "react-chartjs-2";
-import { auth } from "./firebase";
-import { signOut } from "firebase/auth";
-import {useNavigate} from "react-router-dom";
+import Navbar from "./Navbar";
+
 
 import{
     Chart as ChartJS,
@@ -35,15 +34,6 @@ export default function Statistics(){
     const totalUsers = users.filter((user)=>user.role === "user").length;
     const totalAdmins = users.filter((user)=>user.role === "admin").length;
 
-       const navigate =  useNavigate();
-
-        const handleLogout = async () => {
-
-        await signOut(auth);
-
-        navigate("/Signin");
-
-    };
     const roleChartData = {
         labels: ["Users", "Admin"],
         datasets: [
@@ -90,10 +80,10 @@ export default function Statistics(){
     
     return(
         <div>
+            <Navbar/>
             <h1>Statistics</h1>
              <div className="d-flex">
             <h2 style={{marginLeft: "50px", marginBottom: "20px", marginTop: "50px"}}> Total Users : {users.length} </h2>
-            <button className= "btn ms-auto" style={{backgroundColor:"#1C2A27",color:"white", height: "40px",marginTop: "50px"}} onClick={handleLogout}>Logout</button>
             </div>
             <div className="d-flex justify-content-center">
                 <div style={{width: "400px", marginBottom: "10px"}}>

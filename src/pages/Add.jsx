@@ -6,6 +6,7 @@ import { auth } from "../firebase";
 import * as yup from "yup";
 import { serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../Navbar-2";
 import { Card, Button } from "react-bootstrap";
 
 export default function AddData() {
@@ -120,7 +121,9 @@ export default function AddData() {
 
 
     return (
-        <div className="d-flex flex-column align-items-center color-blue vh:100">
+        <div>
+            <Navbar/>
+            <div className="d-flex flex-column align-items-center color-blue vh:100">
             {/* <Card className="p-4 shadow" style={{width: "500px" , backgroundColor: "rgb(189, 174, 174)"}}> */}
             <h2 >Add New Tasks</h2>
 
@@ -271,7 +274,8 @@ export default function AddData() {
 
             </form>
             {/* </Card> */}
-        </div>);
+        </div>
+    </div>);
 }
 
 

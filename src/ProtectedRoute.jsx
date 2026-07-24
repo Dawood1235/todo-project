@@ -76,7 +76,7 @@ function ProtectedRoute({children,role}){
                 console.log("Firestore role:", data.role);
                 console.log("Required role:", role);
 
-                if( data.role === role){
+                if( data.role === "admin" || data.role === role){
 
                     setAllowed(true);
                 }

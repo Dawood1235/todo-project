@@ -1,46 +1,34 @@
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
-import { auth } from "../firebase";
-import { signOut } from "firebase/auth";
-
-import { useNavigate } from "react-router-dom";
 import SPLoader from "./Loader";
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
-  collection,
-  getDocs
+    collection,
+    getDocs
 } from "firebase/firestore";
+import Navbar from "../Navbar";
 
-const AdminDashboard = ({role}) => {
 
- console.log("admi page----------role",role)
+const AdminDashboard = ({ role }) => {
+
+    console.log("admi page----------role", role)
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    
-        const navigate =  useNavigate();
-
-        const handleLogout = async () => {
-
-        await signOut(auth);
-
-        navigate("/Signin");
-
-    };
 
     useEffect(() => {
 
         const fetchUsers = async () => {
 
-            try{
+            try {
 
                 const querySnapshot = await getDocs(
-                    collection(db,"users")
+                    collection(db, "users")
                 );
 
                 const usersArray = [];
 
-                querySnapshot.forEach((doc)=>{
+                querySnapshot.forEach((doc) => {
 
                     usersArray.push({
                         id: doc.id,
@@ -52,7 +40,7 @@ const AdminDashboard = ({role}) => {
                 setUsers(usersArray);
 
             }
-            catch(error){
+            catch (error) {
                 console.log(error);
             }
 
@@ -62,56 +50,52 @@ const AdminDashboard = ({role}) => {
 
         fetchUsers();
 
-    },[]);
+    }, []);
 
 
-    if(loading){
-        return <SPLoader/>;
+    if (loading) {
+        return <SPLoader />;
     }
 
     return (
 
-        <div className= "dashboard">
+        <div>
+            <Navbar />
+            <div className="dashboard">
+                <h1>Admin Dashboard</h1>
 
-            <h1>Admin Dashboard</h1>
+                <h2>All Registered Users</h2>
 
-            <h2>All Registered Users</h2>
+                <table border="1" cellPadding="10">
 
-            <table border="1" cellPadding="10">
+                    <thead>
 
-                <thead>
-
-                    <tr>
-                        <th>Email</th>
-                        <th>Role</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    {users.map((user)=>(
-
-                        <tr key={user.id}>
-
-                            <td>{user.email}</td>
-                            <td>{user.role}</td>
+                        <tr>
+                            <th>Email</th>
+                            <th>Role</th>
 
                         </tr>
 
-                    ))}
+                    </thead>
 
-                </tbody>
+                    <tbody>
 
-            </table>
-            
-            <div id="lgstbtns">
-            <button onClick = {handleLogout} >Logout </button>
+                        {users.map((user) => (
 
-            <Link to="/Statistics">
-            <button>Statistics </button>
-            </Link>
+                            <tr key={user.id}>
+
+                                <td>{user.email}</td>
+                                <td>{user.role}</td>
+
+                            </tr>
+
+                        ))}
+
+                    </tbody>
+
+                </table>
+
+                
             </div>
 
         </div>

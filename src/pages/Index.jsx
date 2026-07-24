@@ -5,6 +5,7 @@ import { db } from "../firebase";
 import { updateDoc, startAt, deleteDoc, doc } from "firebase/firestore";
 import { auth } from "../firebase";
 import { onAuthStateChanged } from 'firebase/auth';
+import Navbar from "../Navbar-2";
 import { reauthenticateWithCredential, signOut } from "firebase/auth";
 
 import { collection, query, where, orderBy, limit, getDocs, startAfter } from "firebase/firestore";
@@ -342,6 +343,7 @@ export default function Homepage() {
 
     return (
         <div className="homepage">
+            <Navbar />
             <h1>Your Tasks</h1>
 
             <div id="adtbtn">

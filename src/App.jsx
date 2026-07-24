@@ -2,7 +2,9 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import SignUpPage from "./pages/Signup";
 import SignInPage from "./pages/Signin";
+import UserManagement from "./pages/user-management";
 import ProtectedRoute from "./ProtectedRoute";
+import { UserContext,  UserProvider } from "./ContextProvider";
 import PublicOnlyRoute from "./PublicOnlyRoute";
 import {auth} from './firebase';
 // import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
@@ -21,7 +23,7 @@ import AdminDashboard from "./pages/Admin-dashboard";
 
 export default function App() {
 return(
-
+<UserProvider>
 <BrowserRouter>
 
 <Routes>
@@ -74,6 +76,15 @@ element={
 />
 
 <Route
+path="/user-management"
+element={
+<ProtectedRoute role="admin">
+    <UserManagement />
+</ProtectedRoute>
+}
+/>
+
+<Route
 path="/unauthorized"
 element={<Unauthorized/>}
 />
@@ -81,6 +92,7 @@ element={<Unauthorized/>}
 </Routes>
 
 </BrowserRouter>
+</UserProvider>
 
 );
 
