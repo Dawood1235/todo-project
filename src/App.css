@@ -42,6 +42,27 @@ h1{
 
 }
 
+.profile-menu {
+    position: relative;
+}
+
+.profile-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 1000;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+}
+
 .trow td:first-child{
   border-top-left-radius: 20px; 
   border-bottom-left-radius: 20px; 

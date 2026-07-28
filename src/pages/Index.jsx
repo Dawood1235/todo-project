@@ -557,20 +557,16 @@ export default function Homepage() {
             )}
             <div className="btns">
                 <button onClick={previousPage}
+                disabled={currentPage===1}
                  style = {{backgroundColor: "#1C2A27", color:"white"}}
                 >
                     Previous
                 </button>
 
-                {Array.from({ length: count_pages }).map((_, index) => (
-                    <button
-                        key={index}
-                        onClick={() => goToPage(index)}
-                        className={currentPage === index + 1 ? "active" : ""}
+                <button className="active"
                     >
-                        {index + 1}
-                    </button>
-                ))}
+                    {currentPage}
+                </button>
 
 
                 <button onClick={nextPage}

@@ -1,8 +1,17 @@
 import { auth } from "./firebase";
 import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import {useState} from "react";
+import Profile from "./pages/profile"
+import {FaUserCircle} from "react-icons/fa";
+
 
 export default function Navbar(){
+  const [showProfile,setShowProfile]=useState(false);
+
+  
+    
+  
   const navigate = useNavigate();
   const handleLogout = async () => {
 
@@ -11,7 +20,8 @@ export default function Navbar(){
         navigate("/Signin");
 
     };
-return(<nav className="navbar navbar-expand-lg navbar-light bg-light">
+return(
+<nav className="navbar navbar-expand-lg navbar-light bg-light">
   <a className="navbar-brand" href="#">
     To Do App 
   </a>
@@ -44,6 +54,21 @@ return(<nav className="navbar navbar-expand-lg navbar-light bg-light">
         </button>
       </li>
     </ul>
+  </div>
+  <div className="profile-menu">
+  <button
+      onClick = {()=>setShowProfile(true)}
+      className="profile-icon-btn"
+      >
+        <FaUserCircle size={35} />
+      </button>
+      {showProfile && (
+        <div className="profile-dropdown">
+        <Profile
+          onClose={()=>setShowProfile(false)}
+      />
+      </div>
+  )}
   </div>
 </nav>
 );
