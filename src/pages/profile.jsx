@@ -2,13 +2,8 @@ import {useEffect, useState } from "react";
 import {auth,db,storage} from "../firebase";
 import {doc,getDoc, updateDoc} from "firebase/firestore";
 
-import{
-    ref,
-    uploadBytes,
-    getDownloadURL
-} from "firebase/storage";
 
-export default function Profile({onClose}){
+export default function Profile({onClose,setProfileImage}){
     const [firstName,setFirstName] = useState("");
     const [lastName,setLastName] = useState("");
 
@@ -49,8 +44,13 @@ export default function Profile({onClose}){
         const file = e.target.files[0];
         if(file){
             setSelectedFile(file);
+            const reader=new FileReader()
+            reader.onloadend=()=>{
+                setProfilePic(reader.result);
+            }
 
-            setProfilePic(URL.createObjectURL(file));
+            reader.readAsDataURL(file);
+
         }
     };
 
@@ -62,21 +62,15 @@ export default function Profile({onClose}){
         setLoading(true);
 
         try{
-            let imageURL = profilePic;
-
-            if(selectedFile){
-                const imageRef=ref(storage,`profilePictures/${user.uid}`);
-                await uploadBytes(imageRef, selectedFile);
-                imageURL = await getDownloadURL(imageRef);
-            }
-
             const userRef = doc(db,"users",user.uid);
 
             await updateDoc(userRef,{
                 firstName: firstName,
                 lastName: lastName,
-                profilePic:imageURL
-            });
+                profilePic: profilePic
+            })
+            
+            setProfileImage(profilePic);
 
             alert("Profile Created SUccessfully");
             onClose();
@@ -97,14 +91,14 @@ export default function Profile({onClose}){
                     </button>
                     <h2>My Profile</h2>
                     <div className = "profile-picture-container">
-                        <img
+                        {/* <img
                             src={
                                 profilePic || 
                                 "https://via.placeholder.com/100"
                             }
                             alt="Profile"
                             className="profile-picture"
-                        />
+                        /> */}
 
                         <input
                             type="file"
@@ -114,7 +108,7 @@ export default function Profile({onClose}){
                         
                         </div>
 
-                        <div>
+                        <div className="profile-field"> 
                             <label>First Name</label>
 
                             <input
@@ -126,7 +120,7 @@ export default function Profile({onClose}){
                             />
                         </div>
 
-                        <div>
+                        <div className="profile-field">
                             <label>Last Name</label>
 
                             <input
@@ -139,7 +133,7 @@ export default function Profile({onClose}){
                         </div>
 
                         
-                        <div>
+                        <div className="profile-field">
                             <label>Email</label>
 
                             <input
@@ -150,6 +144,7 @@ export default function Profile({onClose}){
                         </div>
                     
                     <button
+                        className="close-btn"
                         onClick={handleSave}
                         disabled={loading}
                     >

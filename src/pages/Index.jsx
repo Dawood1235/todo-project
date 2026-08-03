@@ -27,7 +27,8 @@ export default function Homepage() {
         category: "",
         priority: "",
         progress: "",
-        link: ""
+        link: "",
+        status: "Pending"
     });
 
     const [tasks, setTasks] = useState([]);
@@ -183,7 +184,7 @@ export default function Homepage() {
 
                 loadData();
 
-            }, 300);
+            }, 50);
 
             return () => clearTimeout(delay);
         });
@@ -284,6 +285,7 @@ export default function Homepage() {
             priority: task.priority || "",
             progress: task.progress || "",
             link: task.link || "",
+            status:task.status || "Pending"
         });
         setShowModal(true);
     }
@@ -301,6 +303,8 @@ export default function Homepage() {
                 priority: editTask.priority || "",
                 progress: editTask.progress || "",
                 link: editTask.link || "",
+                status: editTask.status || "Pending"
+
             });
             setShowModal(false);
 
@@ -365,7 +369,7 @@ export default function Homepage() {
             {/* filter(title.toLower.trim() || description.tolower.trim()) */}
             
                 {/* <div className='card' style={{width: '18rem'}}> */}
-        <div className="container py-5">
+        <div className="container flex-grow-1">
             <div className="row g-4 justify-content-center">
             {    tasks.map((task) => (
                     <div className="col-12 col-sm-6 col-md-4" key={task.id}>
@@ -514,6 +518,21 @@ export default function Homepage() {
                                             })
                                         }
                                     />
+                        <select
+                            className = "form-select mb-3"
+                            value={editTask.status || "Pending"}
+                            onChange={(e)=>
+                                setEditTask({
+                                    ...editTask,
+                                    status: e.target.value
+                                })
+                            }
+                        >
+                            <option value="Pending">Pending</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+
+
 
                                     <input
                                         type="url"
@@ -574,13 +593,6 @@ export default function Homepage() {
                     disabled={!lastDoc || currentPage >= count_pages}>
                     Next
                 </button>
-
-                <div className='hlogout1'>
-                    <button onClick={handleLogout}
-                    style = {{backgroundColor: "#1C2A27", color:"white", position:'absolute', right:'80px'}}
-                    > Logout 
-                    </button>
-                </div>
             </div>
         </div >
     );

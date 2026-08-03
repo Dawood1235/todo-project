@@ -35,14 +35,12 @@ const SignInPage = () => {
       const data = snapshot.data();
       setLoading(false);
 
-      setTimeout(() => {
         alert("Successfully signed in");
         if (data.role === "admin") {
           navigate("/pages/Admin-dashboard");
         } else {
           navigate("/");
         }
-      }, 1000);
 
     } catch (error) {
       setLoading(false);

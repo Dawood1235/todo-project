@@ -3,6 +3,7 @@ import {useEffect,useState} from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged} from "firebase/auth";
 import { auth,db } from "./firebase";
+import SPLoader from "./pages/Loader";
 
 function PublicOnlyRoute({children}){
     const [userRole,setUserRole] = useState(null);
@@ -35,7 +36,7 @@ function PublicOnlyRoute({children}){
     }, []);
 
     if(loading){
-        return <h2>Loading...</h2>
+        return <SPLoader />;
     }
 
     if(isLoggedIn){

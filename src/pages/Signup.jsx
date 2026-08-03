@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword,signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from "../firebase";
 import { app } from "../firebase";
@@ -8,13 +8,16 @@ import * as yup from "yup";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const schema = yup.object({
+  firstName: yup.string().required("Please enter your first name"),
+  lastName: yup.string().required("Please enter your last name"),
   email: yup.string().required("Please enter your email"),
   password: yup.string().required("Please enter your password"),
 });
 
 
 const SignUpPage = () => {
-
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,14 +30,20 @@ const SignUpPage = () => {
   const createUser = async () => {
     setLoading(true);
     try {
-      await schema.validate({ email, password }, { abortEarly: false });
+      await schema.validate({ firstName, lastName, email, password }, { abortEarly: false });
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       await setDoc(doc(db, "users", user.uid), {
+        firstName: firstName,
+        lastName: lastName,
+        lowerfirstName: firstName.toLowerCase().trim(),
+        lowerlastName: lastName.toLowerCase().trim(),
         email: user.email,
         role: "user"
       });
+
+      await signOut(auth);
       setLoading(false);
       alert("Succesfully added");
       navigate("/Signin");
@@ -55,6 +64,7 @@ const SignUpPage = () => {
     }
 
   };
+
   return (
 
 
@@ -62,6 +72,36 @@ const SignUpPage = () => {
     <div className="container d-flex justify-content-center align-items-center vh-100">
       <div className="card shadow p-4" style={{ width: "400px" }}>
         <h2 className="text-center mb-4">Sign Up</h2>
+
+        <div className="mb-3">
+          <label className="form-label">First Name</label>
+          <input
+            type="text"
+            className="form-control"
+            value={firstName}
+            onChange={(e) => {
+              setFirstName(e.target.value)
+              setErrors((prev) => ({ ...prev, firstName: "" }));
+            }}
+            placeholder="Enter your first name"
+          />
+          {errors.firstName && <p style={{ color: "red" }}>{errors.firstName}</p>}
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Last Name</label>
+          <input
+            type="text"
+            className="form-control"
+            value={lastName}
+            onChange={(e) => {
+              setLastName(e.target.value)
+              setErrors((prev) => ({ ...prev, lastName: "" }));
+            }}
+            placeholder="Enter your last name"
+          />
+          {errors.lastName && <p style={{ color: "red" }}>{errors.lastName}</p>}
+        </div>
 
         <div className="mb-3">
           <label className="form-label">Username</label>

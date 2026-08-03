@@ -8,8 +8,8 @@ import {FaUserCircle} from "react-icons/fa";
 
 export default function Navbar(){
   const [showProfile,setShowProfile]=useState(false);
+  const [profileImage, setProfileImage] = useState(null);
 
-  
     
   
   const navigate = useNavigate();
@@ -60,12 +60,23 @@ return(
       onClick = {()=>setShowProfile(true)}
       className="profile-icon-btn"
       >
+        {profileImage ? (
+          <img
+            src={profileImage}
+            alt="Profile"
+            className="navbar-profile-img"
+          />
+        
+      ): (
         <FaUserCircle size={35} />
+        )}
       </button>
+
       {showProfile && (
         <div className="profile-dropdown">
         <Profile
           onClose={()=>setShowProfile(false)}
+          setProfileImage={setProfileImage}
       />
       </div>
   )}

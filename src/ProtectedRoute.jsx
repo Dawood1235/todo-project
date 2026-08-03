@@ -36,6 +36,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 import { useEffect, useState } from "react";
+import SPLoader from "./pages/Loader";
 
 
 function ProtectedRoute({children,role}){
@@ -104,7 +105,7 @@ function ProtectedRoute({children,role}){
 
     if(loading){
 
-        return <h2>Loading...</h2>;
+            return <SPLoader />;
 
     }
 

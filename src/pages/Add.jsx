@@ -1,18 +1,21 @@
 import Submit from "./Submit";
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from "../firebase";
 import { auth } from "../firebase";
 import * as yup from "yup";
 import { serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import SPLoader from "./Loader"; 
 import Navbar from "../Navbar-2";
 import { Card, Button } from "react-bootstrap";
 
 export default function AddData() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [pageLoading, setPageLoading] = useState(true);
     const [errors, setErrors] = useState({});
+
 
     const schema = yup.object({
         task: yup.string().min(5).max(12).required("Please enter the task is required"),
@@ -52,7 +55,8 @@ export default function AddData() {
                 category,
                 priority,
                 progress: prg,
-                link
+                link,
+                status: "Pending",
             }, {abortEarly:false},
             );
 
@@ -69,6 +73,7 @@ export default function AddData() {
                 progress: prg,
                 link,
                 uid: auth.currentUser.uid,
+                status: "Pending",
 
                 createdAt: serverTimestamp()
             });
@@ -103,6 +108,17 @@ export default function AddData() {
     const [reminder, setRem] = useState(false);
     const [prg, setPrg] = useState(0);
     const [link, setLink] = useState("");
+
+    useEffect(() => {
+    const timer = setTimeout(()=>{
+    setPageLoading(false);
+    } ,1000);
+    return ()=> clearTimeout(timer);
+    }, []);
+
+    if(pageLoading){
+        return <SPLoader />
+    }
 
 
 
