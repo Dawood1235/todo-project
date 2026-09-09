@@ -6,7 +6,7 @@ dotenv.config();
 const connectDB = require('./config/db');
 const dns=require('dns');
 const cors = require('cors');
-const port = 5000;
+const port = process.env.PORT || 5000;
 const Task = require('./models/todo.js');
 const todoroutes = require("./routes/todoroutes");
 const authroutes = require("./routes/authroutes");
@@ -94,7 +94,7 @@ app.use("/notifications",notificationroutes);
 // });
 
 app.listen(port,()=>{
-    console.log("Server running http://localhost:5000");
+    console.log(`Server running on port ${port}`);
 });
 
 
