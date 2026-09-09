@@ -37,6 +37,10 @@ app.use("/", authroutes);
 app.use("/admin", adminroutes);
 app.use("/notifications",notificationroutes);
 
+app.get("/", (req, res) => {
+    res.status(200).send("Backend is running");
+});
+
 
 // app.use("/api", notificationRoutes);
 
