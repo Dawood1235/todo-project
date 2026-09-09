@@ -34,7 +34,7 @@ const SignUpPage = () => {
     try {
       await schema.validate({ firstName, lastName, email, password }, { abortEarly: false });
 
-      const response = await axios.post("http://localhost:5000/signup",
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/signup`,
         {
           firstName,
           lastName,

@@ -134,7 +134,7 @@ export default function Profile({ onClose, setProfileImage }) {
             }
 
             await axios.patch(
-                "http://localhost:5000/api/profile",
+                `${import.meta.env.VITE_API_URL}/api/profile`,
                 {
                     firstName: firstName,
                     lastName: lastName,

@@ -54,7 +54,7 @@ export default function Homepage() {
             const token = localStorage.getItem("token");
             setDeletingId(id);
 
-            await axios.delete("http://localhost:5000/api/tasks", {
+            await axios.delete(`${import.meta.env.VITE_API_URL}/api/tasks`, {
                 params: {
                     _id: id
                 },
@@ -77,7 +77,7 @@ export default function Homepage() {
             setLoading(true);
             const token = localStorage.getItem("token");
 
-            const response = await axios.get("http://localhost:5000/api/tasks", {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/tasks`, {
                 params: {
                     page: page,
                     search: searchText
@@ -157,7 +157,7 @@ export default function Homepage() {
                 status: editTask.status
             }
 
-            await axios.patch("http://localhost:5000/api/tasks", { data }, {
+            await axios.patch(`${import.meta.env.VITE_API_URL}/api/tasks`, { data }, {
                 params: { id: editTask.id },
                 headers: {
                     Authorization: `Bearer ${token}`

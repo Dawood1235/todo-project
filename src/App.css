@@ -574,7 +574,7 @@ input[type="checkbox"]{
 .hlogout1 {
         display: flex;
         justify-content: flex-start;                                              
-};
+}
 
 .action-btn {
     background-color: transparent !important;
@@ -823,65 +823,3 @@ th{
     min-height: 400px;
     width: 100%;
 }
-/* .logo{
-    display: flex;
-    align-items: row;
-} */
-
-/* .out-card{
-    background-color: rgb(118, 216, 216);
-    margin: 20px auto;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-} */
-
-/* .task-buttons {
-    display: flex;
-    gap: 15px;
-    margin-left: auto;
-} */
-
-
-/* .task-buttons button {
-    height: 40px;
-    background-color: rgb(7, 7, 41);
-    color: white;
-    font-weight: bold;
-    border-radius: 10px;
-    padding: 0 15px;
-    border: none;
-    cursor: pointer;
-} */
-
-/* label{
-    text-align: left;
-    font-weight: bold;
-    font-size: 20px;
-} */
-
-/* .pagination {
-  display: flex;
-  justify-content: center;
-  list-style: none; /* remove list bullets 
-  padding: 0px;
-} */
-
-/* .pagination li a {
-  display: block;
-  padding: 8px 12px;
-  text-decoration: none;
-  border: 1px solid gray;
-  color: black;
-  margin: 0 4px; 
-  border-radius: 5px;
-}*/
-
-/* #tskbtns{
-    background-color: #1C2A27;
-    color: white;
-}     */
-
-/* #todofrm label{
-    text-align:center;
-} */

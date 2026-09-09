@@ -20,7 +20,7 @@ export function UserProvider({ children }){
                     return;
                 }
 
-            const response = await axios.get("http://localhost:5000/api/profile",{
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`,{
                 headers: {
                     Authorization: `Bearer ${token}`
                 }

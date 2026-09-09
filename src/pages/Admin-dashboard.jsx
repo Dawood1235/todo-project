@@ -92,7 +92,7 @@ const AdminDashboard = ({ role }) => {
         console.log("SEARCH:", searchText);
 
             const token = localStorage.getItem("token");
-            const response = await axios.get("http://localhost:5000/admin/admndsb",
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/admin/admndsb`,
                 {
                     params: {
                         page: page,

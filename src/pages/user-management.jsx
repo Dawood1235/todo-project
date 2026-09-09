@@ -51,7 +51,7 @@ export default function UserManagement() {
             setLoading(true);
             e.preventDefault();
             const token = localStorage.getItem("token")
-            const response = await axios.patch(`http://localhost:5000/admin/admntaskupdate/${editTask._id}`,
+            const response = await axios.patch(`${import.meta.env.VITE_API_URL}/admin/admntaskupdate/${editTask._id}`,
                 editTask,
                 {
                     headers: { Authorization: `Bearer ${token}` }
@@ -84,7 +84,7 @@ export default function UserManagement() {
             setPageLoading(true);
             const token = localStorage.getItem("token");
 
-            const showadmin = await axios.get("http://localhost:5000/admin/alltsks", {
+            const showadmin = await axios.get(`${import.meta.env.VITE_API_URL}/admin/alltsks`, {
                 params: {
                     page: page,
                     search: search
@@ -123,7 +123,7 @@ export default function UserManagement() {
         try {
             setDeletingId(id);
             const token = localStorage.getItem("token");
-            const handledelete = await axios.delete("http://localhost:5000/admin/admndel",
+            const handledelete = await axios.delete(`${import.meta.env.VITE_API_URL}/admin/admndel`,
                 {
                     params: {
                         id: id

@@ -13,7 +13,7 @@ const NotificationBell = () => {
             const token = localStorage.getItem("token");
 
             const response = await axios.get(
-                "http://localhost:5000/notifications",
+                `${import.meta.env.VITE_API_URL}/notifications`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -61,7 +61,7 @@ const NotificationBell = () => {
             const token = localStorage.getItem('token');
          
             const response = await axios.patch(
-                'http://localhost:5000/notifications/notpat',
+                `${import.meta.env.VITE_API_URL}/notifications/notpat`,
                 {},
                 {
                  headers: {

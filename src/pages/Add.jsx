@@ -66,7 +66,7 @@ export default function AddData() {
 
     const token = localStorage.getItem("token");
 
-    const resp = await axios.post("http://localhost:5000/api/tasks", data,
+    const resp = await axios.post(`${import.meta.env.VITE_API_URL}/api/tasks`, data,
         {
             headers: {
                 Authorization: `Bearer ${token}`

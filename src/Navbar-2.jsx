@@ -29,7 +29,7 @@ export default function Navbar({ search, setSearch, setCurrentPage, profilePic }
       try {
         const token = localStorage.getItem("token");
 
-        const response = await axios.get("http://localhost:5000/api/profile",
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`,
           {
             headers:
             {
