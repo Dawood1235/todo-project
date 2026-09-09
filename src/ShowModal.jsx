@@ -23,7 +23,7 @@ export default function ShowModal({ editTask, setEditTask, onSave, onClose }) {
                             }
                         />
 
-                        <textarea
+                        {/* <textarea
                             className="form-control mb-3"
                             placeholder="Description"
                             value={editTask.description}
@@ -33,7 +33,7 @@ export default function ShowModal({ editTask, setEditTask, onSave, onClose }) {
                                     description: e.target.value
                                 })
                             }
-                        />
+                        /> */}
 
                         <input
                             type="date"

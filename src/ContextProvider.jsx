@@ -1,7 +1,5 @@
 import { createContext,useEffect,useState } from 'react';
-import { auth,db } from './firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from "firebase/firestore";
+import axios from "axios";
 
 export const UserContext = createContext()
 
@@ -11,34 +9,39 @@ export function UserProvider({ children }){
     const [loading, setLoading] = useState(true);
 
     useEffect (()=>{
-        const unsubscribe = onAuthStateChanged(auth, async(currentUser) => {
-            if(!currentUser){
-                setUser(null);
-                setRole(null);
-                setLoading(false);
-                return;
-            }
-
-            setUser(currentUser);
-
+        const fetchuser = async()=> {
             try{
-                const docRef = doc(db, "users", currentUser.uid);
-                const snapshot = await getDoc(docRef);
-                if(snapshot.exists()){
-                    setRole(snapshot.data().role);
-                }
-                else{
+                const token = localStorage.getItem("token");
+
+                if(!token){
+                    setUser(null);
                     setRole(null);
+                    setLoading(false);
+                    return;
                 }
-            } catch(error){
-                console.error("Error fetching role", error);
-                setRole(null);
-            }
+
+            const response = await axios.get("http://localhost:5000/api/profile",{
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            setUser(response.data);
+            setRole(response.data.role);
+
+        } catch(error){
+            console.error("Error fetching user:", error);
+
+            setUser(null);
+            setRole(null);
+        }
+        finally{
             setLoading(false);
-        });
-        return ()=> unsubscribe();
+        }
+    }
+        fetchuser();
     }, []);
 
-    return(<UserContext.Provider value={{user,role,loading}}>
+    return(<UserContext.Provider value={{user,setUser,role,loading}}>
         {children}
     </UserContext.Provider>);}

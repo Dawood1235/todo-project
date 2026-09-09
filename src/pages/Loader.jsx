@@ -3,31 +3,22 @@ import { useState, useEffect } from 'react';
 
 export default function SPLoader() {
 
-    // const [loading, setLoading] = useState(true);
-
-    // useEffect(() => {
-    //     const timer = setTimeout(() => {
-    //         setLoading(false);
-    //     }, 3000)
-    //     return () => { clearTimeout(timer) }
-
-    // }, [])
-
-    // if (!loading) return null;
-
     return (
                 <div
             style={{
                 position: "fixed",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100vh",
-                backgroundColor: "rgba(255,255,255,0.8)",
+                inset: 0,
+                // top: "50%",
+                // left: "50%",
+                // width: "100%",
+                // minHeight: "70vh",
+                backgroundColor: "#0d0f1a",
+                // transform: "translate(-50%,-50%)",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                zIndex: 9999
+                zIndex: 9999,
+                // pointerEvents: "none"
             }}
         >
             <div className="text-center">
@@ -37,7 +28,7 @@ export default function SPLoader() {
                     role="status"
                 ></div>
 
-                <p className="mt-3 fw-bold">Loading your tasks...</p>
+                <p className="mt-3 fw-bold" style={{color:"white"}}>Loading...</p>
             </div>
         </div>
     );

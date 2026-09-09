@@ -1,138 +1,127 @@
 import { useEffect, useState } from "react";
-import { db } from "../firebase";
+// import { db } from "../firebase";
 import SPLoader from "./Loader";
 import { Link } from "react-router-dom";
-import {
-    collection,
-    endAt,
-    getDocs,
-    startAt,
-    query,
-    limit,
-    startAfter,
-    orderBy
-} from "firebase/firestore";
+import axios from "axios";
+// import {
+//     collection,
+//     endAt,
+//     getDocs,
+//     startAt,
+//     query,
+//     limit,
+//     startAfter,
+//     orderBy
+// } from "firebase/firestore";
 import Navbar from "../Navbar";
 
 
 const AdminDashboard = ({ role }) => {
 
     console.log("admi page----------role", role);
-    const [currentPage,setCurrentPage] = useState(1);
-    const [lastDocs,setLastDocs] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    // const [lastDocs, setLastDocs] = useState(null);
+    // const [pageCursors, setPageCursors] = useState([null]);
     const [hasNextPage, setHasNextPage] = useState(false);
-    const usersPerPage = 10;
+    // const usersPerPage = 10;
     const [users, setUsers] = useState([]);
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
 
-    const searchUsers = async(searchText,lastDocs=null) => {
-        const text = searchText.trim().toLowerCase();
+    // const searchUsers = async(searchText,lastDocs=null) => {
+    //     const text = searchText.trim().toLowerCase();
 
-        if(!text){
-            fetchUsers();
-            return;
-        }
+    //     if(!text){
+    //         fetchUsers();
+    //         return;
+    //     }
 
-        try{
-            let q;
-            if(lastDocs){
-            q = query(
-                collection(db,"users"),
-                orderBy("lowerfirstName"),
-                startAt(text),
-                endAt(text + "\uf8ff"),
-                startAfter(lastDocs),
-                limit(usersPerPage + 1)
-            );
-            } else{
-                
-            q = query(
-                collection(db,"users"),
-                startAt(text),
-                endAt(text + "\uf8ff"),
-                orderBy("lowerfirstName"),
-                limit(usersPerPage + 1)
-                );
-            }
-            const snapshot = await getDocs(q);
+    //     try{
+    //         let q;
+    //         if(lastDocs){
+    //         q = query(
+    //             collection(db,"users"),
+    //             orderBy("lowerfirstName"),
+    //             startAt(text),
+    //             endAt(text + "\uf8ff"),
+    //             startAfter(lastDocs),
+    //             limit(usersPerPage + 1)
+    //         );
+    //         } else{
 
-            const results = snapshot.docs
-                .slice(0,usersPerPage).map((doc)=>({
-                    id:doc.id,
-                    ...doc.data()
-                }));
+    //         q = query(
+    //             collection(db,"users"), 
+    //             orderBy("lowerfirstName"),
+    //             startAt(text),
+    //             endAt(text + "\uf8ff"),
+    //             limit(usersPerPage + 1)
+    //             );
+    //         }
+    //         const snapshot = await getDocs(q);
 
-            setUsers(results);
-            if(snapshot.docs.length>usersPerPage){
-                setLastDocs(snapshot.docs[usersPerPage-1]);
-                setHasNextPage(true);
-            }
-            else{
-                setHasNextPage(false);
+    //         const results = snapshot.docs
+    //             .slice(0,usersPerPage).map((doc)=>({
+    //                 id:doc.id,
+    //                 ...doc.data()
+    //             }));
 
-            }
-        } catch(error){
-            console.log("search error",error);
-        }
-    };
+    //         setUsers(results);
+    //         if(snapshot.docs.length>usersPerPage){
+    //             setLastDocs(snapshot.docs[usersPerPage-1]);
+    //             setHasNextPage(true);
+    //         }
+    //         else{
+    //             setHasNextPage(false);
+
+    //         }
+    //     } catch(error){
+    //         console.log("search error",error);
+    //     }
+    // };
 
 
     // useEffect(() => {
 
-      
-const fetchUsers = async(lastDocs = null)=>{
-     try{
-            let q;
-            if(lastDocs){
-            q = query(
-                collection(db,"users"),
-                orderBy("lowerfirstName"),
-                startAfter(lastDocs),
-                limit(usersPerPage)
-            );
-            } else{
-                
-            q = query(
-                collection(db,"users"),
-                orderBy("lowerfirstName"),
-                limit(usersPerPage + 1)
-                );
-            }
-            const querySnapshot = await getDocs(q);
 
-            const usersArray = querySnapshot.docs
-                .slice(0,usersPerPage).map((doc)=>({
-                    id:doc.id,
-                    ...doc.data()
-                }));
+    const fetchUsers = async (page = 1, searchText="") => {
+        try {
+            setLoading(true);
 
-            setUsers(usersArray);
-            if(querySnapshot.docs.length>usersPerPage){
-                setLastDocs(querySnapshot.docs[usersPerPage-1]);
-                setHasNextPage(true);
-            }
-            else{
-                setHasNextPage(false);
+                    console.log("FETCH USERS");
+        console.log("PAGE:", page);
+        console.log("SEARCH:", searchText);
 
-            }
-        } catch(error){
-            console.log("search error",error);
+            const token = localStorage.getItem("token");
+            const response = await axios.get("http://localhost:5000/admin/admndsb",
+                {
+                    params: {
+                        page: page,
+                        search: searchText
+                    },
+                    headers: 
+                    {
+                        Authorization: `Bearer ${token}`
+                    }
+
+                }
+            )
+            setUsers(response.data.docs);
+            setHasNextPage(response.data.hasNextPage);
+            
         }
-    setLoading(false);
-};
 
-useEffect(()=>{
+        catch(error) {
+            console.log(error);
+        }
+        setLoading(false);
+    };
 
-    setLastDocs(null);
-    setCurrentPage(1);
-    if(search.trim()===""){
-        fetchUsers();
-    }
-    else{
-        searchUsers(search);
-    }
-}, [search]);
+    useEffect(() => {
+        const timer = setTimeout(()=> {
+        fetchUsers(currentPage,search);
+    }, 500);
+    return ()=> clearTimeout(timer)
+    }, [currentPage, search]);
 
     if (loading) {
         return <SPLoader />;
@@ -150,15 +139,17 @@ useEffect(()=>{
 
     return (
 
-        <div>
+        <div className = "adm-dshb">
             <Navbar />
             <div className="dashboard">
                 <h1>Admin Dashboard</h1>
-                <input 
-                type="text"
-                className="form-control mb-3"
-                value={search}
-                onChange={(e)=>setSearch(e.target.value)}
+                <input
+                    type="text"
+                    className="form-control mb-3"
+                    value={search}
+                    onChange={(e) => {setSearch(e.target.value)
+                    setCurrentPage(1);
+                  }}
                 />
 
                 <h2>All Registered Users</h2>
@@ -185,7 +176,7 @@ useEffect(()=>{
                                 <td>{user.firstName}</td>
                                 <td>{user.lastName}</td>
                                 <td>{user.email}</td>
-                                <td>{user.role}</td>
+                                <td><span className="role-bdg">{user.role}</span></td>
 
                             </tr>
 
@@ -195,9 +186,13 @@ useEffect(()=>{
 
                 </table>
                 <div>
-                    <button 
-                        disabled={currentPage===1}
-                        onClick={()=>setCurrentPage(currentPage-1)}
+                    <button
+                        disabled={currentPage === 1}
+                        onClick={() => {
+                            const previousPage = currentPage - 1;
+                            setCurrentPage(previousPage);
+                            fetchUsers(pageCursors[previousPage], previousPage);
+                        }}
                     >Previous
                     </button>
 
@@ -205,16 +200,20 @@ useEffect(()=>{
                         Page {currentPage}
                     </span>
 
-                    <button 
+                    <button
                         disabled={!hasNextPage}
-                        onClick={()=>{setCurrentPage(currentPage+1)
-                        if(search.trim()===""){
-                            fetchUsers(lastDocs);
-                        }
-                        else{
-                            searchUsers(search, lastDocs)
-                        }
-                    }}
+                        onClick={() => {
+                            if (!hasNextPage) return;
+
+                            setCurrentPage(currentPage + 1)
+
+                            if (search.trim() === "") {
+                                fetchUsers(lastDocs);
+                            }
+                            else {
+                                searchUsers(search, lastDocs)
+                            }
+                        }}
                     >Next
                     </button>
 

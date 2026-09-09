@@ -1,23 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef,useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { count, endAt, getCountFromServer, queryEqual } from 'firebase/firestore';
-import { db } from "../firebase";
-import { updateDoc, startAt, deleteDoc, doc } from "firebase/firestore";
-import { auth } from "../firebase";
-import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from "../Navbar-2";
-import { reauthenticateWithCredential, signOut } from "firebase/auth";
-
-import { collection, query, where, orderBy, limit, getDocs, startAfter } from "firebase/firestore";
+import { Trash2, Edit2, ExternalLink, Clock, Calendar, Search, Plus } from "lucide-react";
+import axios from "axios";
+// import { subscribeToPushNotifications } from "../utils/pushNotification";
 
 import { Link } from 'react-router-dom';
 import SPLoader from './Loader';
+// import {register_Push} from "../registerPush";
+
 
 export default function Homepage() {
-    // 1. Manage tasks and pagination states
 
     const [showModal, setShowModal] = useState(false);
-
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [progressError, setProgressError] = useState("");
+    const [dateError, setDateError] = useState("");
+    const [taskToDelete, setTaskToDelete] = useState(null);
     const [editTask, setEditTask] = useState({
         id: "",
         task: "",
@@ -32,251 +31,154 @@ export default function Homepage() {
     });
 
     const [tasks, setTasks] = useState([]);
+    const [deletingId, setDeletingId] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+    const remindedTasks = useRef(new Set());
 
-    const [lastDoc, setLastDoc] = useState(null);
+    // const [lastDoc, setLastDoc] = useState(null);
 
     const [loading, setLoading] = useState(true);
-
 
     const [filteredtasks, setFilteredTasks] = useState([]);
 
     const [search, setSearch] = useState("");
 
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageCursors, setPageCursors] = useState([null]);
-
-    const [totalTasks, setTotalTasks] = useState(0);
-
     const navigate = useNavigate();
-    const page_size = 6;
+    // const page_size = 6;
 
-    const fetchTasks = async (user, searchText = "", cursor = null) => {
-        searchText = searchText.trim().toLowerCase();
+
+    const deleteTasks = async (id) => {
         try {
 
-            let q = "";
+            const token = localStorage.getItem("token");
+            setDeletingId(id);
 
-            if (searchText === "") {
-                q = query(
-                    collection(db, "tasks"),
-                    where("uid", "==", user.uid),
-                    orderBy("createdAt", "desc"),
-                    limit(page_size)
-                );
-            }
-            else {
-                q = query(
-                    collection(db, "tasks"),
-                    where("uid", "==", user.uid),
-                    orderBy("taskLower"),
-                    startAt(searchText),
-                    endAt(searchText + "\uf8ff"),
-                    limit(page_size)
-                );
-            }
-            if (cursor) {
-                if (searchText === "") {
-                    q = query(
-                        collection(db, "tasks"),
-                        where("uid", "==", user.uid),
-                        orderBy("createdAt", "desc"),
-                        startAfter(cursor),
-                        limit(page_size)
-                    );
-                } else {
-                    q = query(
-                        collection(db, "tasks"),
-                        where("uid", "==", user.uid),
-                        orderBy("taskLower"),
-                        startAt(searchText),
-                        endAt(searchText + "\uf8ff"),
-                        startAfter(cursor),
-                        limit(page_size)
-                    )
+            await axios.delete("http://localhost:5000/api/tasks", {
+                params: {
+                    _id: id
+                },
+                headers: {
+                    Authorization: `Bearer ${token}`
                 }
-            }
-            console.log("Search text:", searchText);
+            });
+            fetchTasks(currentPage, search);
+        }
+        catch (error) {
+            console.error("Error deleting task:", error);
+        }
+        finally{
+            setDeletingId(null);
+        }
+    }
 
-            console.log("Current User UID:", auth.currentUser?.uid);
-            const snapshot = await getDocs(q);
+    const fetchTasks = useCallback(async (page, searchText = "") => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem("token");
 
-            console.log("Documents found:", snapshot.size);
+            const response = await axios.get("http://localhost:5000/api/tasks", {
+                params: {
+                    page: page,
+                    search: searchText
+                },
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setTasks(response.data.docs);
+            setCurrentPage(response.data.page);
+            setTotalPages(response.data.totalPages);
+            console.log(page);
+            console.log("GET RESPONSE FROM BACKEND:", response.data.docs);
 
-            snapshot.docs.forEach(doc => {
-                console.table(doc.data());
+            response.data.docs.forEach((task) => {
+                console.log(
+                    "TASK FROM GET:",
+                    task.task,
+                    "REMINDER:",
+                    task.reminder
+                );
             });
 
-            // snapshot.forEach(doc => {
-            //     console.log(JSON.stringify(doc.data(), null, 2));
-            // });
-
-            const list = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }))
-
-            setTasks(list);
-
-            if (snapshot.docs.length > 0) {
-                setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-            }
-            else {
-                setLastDoc(null);
-            }
-        } catch (error) {
-            console.log(error);
-        } finally {
-            console.log("loading done");
+            setTasks(response.data.docs);
+            console.log(response.data);
+        }
+        catch (error) {
+            console.error("Error fetching tasks", error);
+            console.log("Status:", error.response?.status);
+            console.log("Response:", error.response?.data);
+        }
+        finally {
             setLoading(false);
         }
-    };
+    }, []);
 
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-
-            if (!user) {
-                console.log("No user is logged in");
-                setLoading(false);
-                return;
-            }
-            const delay = setTimeout(() => {
-                setCurrentPage(1);
-                setPageCursors([null]);
-                setLastDoc(null);
-
-                let countQuery = query(
-                    collection(db, "tasks"),
-                    where("uid", "==", user.uid)
-                );
-
-                if (search.trim() !== "") {
-                    const searchText = search.trim().toLowerCase();
-
-                    countQuery = query(
-                        collection(db, "tasks"),
-                        where("uid", "==", user.uid),
-                        orderBy("taskLower"),
-                        startAt(searchText),
-                        endAt(searchText + "\uf8ff")
-                    );
-                }
-
-                const getTaskCount = async () => {
-                    try {
-                        const countSnapshot = await getCountFromServer(countQuery);
-                        setTotalTasks(countSnapshot.data().count);
-                    } catch (error) {
-                        console.error("Error getting count:", error);
-                    }
-                };
-
-                const loadData = async () => {
-                    console.log("Loading began");
-                    console.log("Current User UID:", user.uid);
-
-                    await getTaskCount();
-                    await fetchTasks(user, search);
-
-                    console.log("Loading finished");
-                    setLoading(false);
-                };
-
-                loadData();
-
-            }, 50);
-
-            return () => clearTimeout(delay);
-        });
-
-        return () => unsubscribe();
-
+        const timer = setTimeout(() => {
+            fetchTasks(1, search);
+        }, 500);
+        return () => clearTimeout(timer);
     }, [search]);
 
+    // const {page} = response.params;
 
-    let count_pages = 0;
-    if (totalTasks % 6 != 0 && totalTasks > 6) {
-        count_pages = Math.floor(totalTasks / 6) + 1;
-    }
-    else if (totalTasks % 6 == 0 && totalTasks > 6) {
-        count_pages = Math.floor(totalTasks / 6);
-    }
-    else if (totalTasks >= 0 && totalTasks <= 6) {
-        count_pages = 1;
-    }
+    useEffect(() => {
+        fetchTasks(currentPage, search);
+    }, [currentPage]);
 
-    const nextPage = async () => {
 
-        if (!lastDoc) return;
 
-        if (currentPage >= count_pages) return;
+    const handleUpdate = async () => {
+        try {
 
-        const cursor = lastDoc;
+            const progress = Number(editTask.progress);
 
-        await fetchTasks(auth.currentUser, search, cursor);
 
-        setPageCursors(prev => [...prev, cursor]);
-        setCurrentPage(prev => prev + 1);
+            if (progress < 0 || progress > 100) {
+                setProgressError("Progress must be between 0 and 100");
+                return;
+            }
+            console.log("UPDATE BUTTON CLICKED");
+            console.log("EDIT TASK:", editTask);
+
+            const token = localStorage.getItem("token");
+
+            const data = {
+                task: editTask.task,
+                description: editTask.description,
+                date: editTask.date,
+                time: editTask.time,
+                category: editTask.category,
+                priority: editTask.priority,
+                progress: editTask.progress,
+                link: editTask.link,
+                status: editTask.status
+            }
+
+            await axios.patch("http://localhost:5000/api/tasks", { data }, {
+                params: { id: editTask.id },
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            await fetchTasks(currentPage, search);
+            setShowModal(false);
+        } catch (error) {
+            console.error("Updating error:", error);
+        }
 
     };
 
-    const previousPage = async () => {
-        if (currentPage === 1) return;
 
-        const newCursors = [...pageCursors];
+    const handleEdit = (task) => {
+        console.log("EDIT BUTTON CLICKED");
+        console.log("TASK RECEIVED:", task);
 
-        newCursors.pop();
-
-        setPageCursors(newCursors);
-
-        const previousCursor = newCursors[newCursors.length - 1];
-
-        setCurrentPage(prev => prev - 1);
-
-        await fetchTasks(auth.currentUser, search, previousCursor);
-
-    }
-
-
-
-    // const PrevPage = () => {
-    //     const prevDoc = history[currentPage - 2];
-
-    //     if(prevDoc || currentPage === 2){
-    //         const newTasks = 
-    //     }
-    // };
-
-    // async function fetchtasks() {
-    //     const querySnapshot = await getDocs(collection(db, "tasks"));
-
-    //     const taskList = querySnapshot.docs.map((doc) => ({
-    //         id: doc.id,
-    //         ...doc.data()
-    //     }))
-    //     setTasks(taskList);
-    //     setFilteredTasks(taskList);
-    // }
-
-    // useEffect(() => {
-    //     const filtered = tasks.filter((item)=>
-    //     item.task.toLowerCase().includes(search.toLowerCase().trim())
-    //     );
-    //     setFilteredTasks(filtered);
-    // }, [search, tasks]);
-
-    async function handledelete(id) {
-        try {
-            await deleteDoc(doc(db, "tasks", id));
-            fetchTasks(search);
-        } catch (error) {
-            console.error("Error deleting task:", error);
-        }
-    }
-
-    function handleEdit(task) {
         setEditTask({
-            id: task.id,
+            id: task._id,
             task: task.task || "",
             description: task.description || "",
             date: task.date || "",
@@ -285,315 +187,438 @@ export default function Homepage() {
             priority: task.priority || "",
             progress: task.progress || "",
             link: task.link || "",
-            status:task.status || "Pending"
+            status: task.status || "Pending"
         });
         setShowModal(true);
     }
 
-    async function handleUpdate(e) {
-        e.preventDefault();
+    useEffect(() => {
+        console.log("Edit task state:", editTask);
+    }, [editTask])
 
-        try {
-            await updateDoc(doc(db, "tasks", editTask.id), {
-                task: editTask.task || "",
-                description: editTask.description || "",
-                date: editTask.date || "",
-                time: editTask.time || "",
-                category: editTask.category || "",
-                priority: editTask.priority || "",
-                progress: editTask.progress || "",
-                link: editTask.link || "",
-                status: editTask.status || "Pending"
-
-            });
-            setShowModal(false);
-
-            await fetchTasks(auth.currentUser, search);
-        } catch (error) {
-            console.error("Error updating task", error);
-        }
-    }
-
-    // async function handleEdit(id) {
-    //     const newTask = prompt("Enter the task");
-
-    //     if (!newTask) return;
-
-    //     try {
-    //         await updateDoc(doc(db, "tasks", id), {
-    //             task: newTask,
-    //             taskLower: newTask.trim().toLowerCase(),
-    //         });
-
-    //         fetchTasks(search);
-
-    //     } catch (error) {
-    //         console.error("Error updating tasks", error);
-    //     }
-    // }
-
-    const handleLogout = async () => {
-
-        await signOut(auth);
-
-        navigate("/Signin");
-
-    };
     console.log("page loading");
     if (loading) {
-        // return <h1 style={{ color: "red" }}>LOADING...</h1>;
         return <SPLoader />
     }
 
+    console.log("showModal:", showModal);
+
     return (
         <div className="homepage">
-            <Navbar />
-            <h1>Your Tasks</h1>
+            <Navbar
+                search={search}
+                setSearch={setSearch}
+                setCurrentPage={setCurrentPage}
+            />
+            <div className='main-tsk'>
+                <h1 className='tasks-hm'>Your Tasks</h1>
 
-            <div id="adtbtn">
-                <input type="text" placeholder="Enter the task to search"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)} 
-                    style={{marginLeft: "80px", align: "left"}}/>
+                {/* <div id="adtbtn"> */}
                 <Link to="/pages/Add">
                     <button id="adtsk"
-                    style = {{backgroundColor: "#1C2A27", color:"white"}}
+                        style={{ backgroundColor: "#7C5CFC", color: "white", border: 0, paddingTop: "5px", paddingBottom: "5px", borderRadius: "15px" }}
                     >
-                        Add Tasks
+                        <Plus size={18} />
+                        Add Task
                     </button>
                 </Link>
             </div>
 
 
-            {/* if(input.value == title.toLower.trim()){} */}
-            {/* filter(title.toLower.trim() || description.tolower.trim()) */}
-            
-                {/* <div className='card' style={{width: '18rem'}}> */}
-        <div className="container flex-grow-1">
-            <div className="row g-4 justify-content-center">
-            {    tasks.map((task) => (
-                    <div className="col-12 col-sm-6 col-md-4" key={task.id}>
-                        <div className="card-body p-4 text-black rounded-5 h-100" style={{backgroundColor: '#51DBC1'}}>
-                    {/* // <div id="tsklst" key={task.id}> */}
-                        <h3>Task: {task.task}</h3>
-                        <p>Description: {task.description}</p>
-                        <p>Date: {task.date}</p>
-                        <p>Time: {task.time}</p>
-                        <p>Category: {task.category}</p>
-                        <p>Priority: {task.priority}</p>
-                        <p>Progress: {task.progress}%</p>
-                        <p>Link: {task.link}</p>
-                            <button 
-                            onClick={() => handleEdit(task)}
-                            style={{backgroundColor: '#1C2A27', color: 'white', marginRight: "5px"}}
-                            >
-                                Edit
-                            </button>
-                            <button 
-                            onClick={() => handledelete(task.id)}
-                            style={{backgroundColor: '#1C2A27', color: 'white'}}
-                            >
-                                Delete
-                            </button>
-                    </div>
-                </div>
-
-                ))
-
-            }
-            </div>
-         </div>
-
-            
-            {showModal && (
-                <div
-                    className="modal fade show d-block "
-                    tabIndex="-1"
-                    style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-                >
-                    <div className="modal-dialog modal-dialog-centered modal-lg">
-                        <div className="modal-content border-0 shadow-lg rounded-4 p-2">
-
-                            <div className="modal-header border-0 pb-0" style={{backgroundColor: '#3B71CA', display:'flex', alignItems:'center', height:'60px', padding:'0 1rem'}}>
-                                <h5 className="modal-title fw-bold text-dark fs-4 m-0 w-100">Edit Task</h5>
-
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    onClick={() => setShowModal(false)}
-                                ></button>
-                            </div>
-
-                            <form onSubmit={handleUpdate}>
-
-                                <div className="modal-body py-3">
-
-                                    <input
-                                        className="form-control mb-3"
-                                        placeholder="Task"
-                                        value={editTask.task}
-                                        onChange={(e) =>
-                                            setEditTask({
-                                                ...editTask,
-                                                task: e.target.value
-                                            })
-                                        }
-                                    />
-
-                                    <textarea
-                                        className="form-control mb-3"
-                                        placeholder="Description"
-                                        value={editTask.description}
-                                        onChange={(e) =>
-                                            setEditTask({
-                                                ...editTask,
-                                                description: e.target.value
-                                            })
-                                        }
-                                    />
-
-                                    <input
-                                        type="date"
-                                        className="form-control mb-3"
-                                        value={editTask.date}
-                                        onChange={(e) =>
-                                            setEditTask({
-                                                ...editTask,
-                                                date: e.target.value
-                                            })
-                                        }
-                                    />
-
-                                    <input
-                                        type="time"
-                                        className="form-control mb-3"
-                                        value={editTask.time}
-                                        onChange={(e) =>
-                                            setEditTask({
-                                                ...editTask,
-                                                time: e.target.value
-                                            })
-                                        }
-                                    />
-
-                                    <input
-                                        className="form-control mb-3"
-                                        placeholder="Category"
-                                        value={editTask.category}
-                                        onChange={(e) =>
-                                            setEditTask({
-                                                ...editTask,
-                                                category: e.target.value
-                                            })
-                                        }
-                                    />
-
-                                    <select
-                                        className="form-select mb-3"
-                                        value={editTask.priority}
-                                        onChange={(e) =>
-                                            setEditTask({
-                                                ...editTask,
-                                                priority: e.target.value
-                                            })
-                                        }
-                                    >
-                                        <option value="">Select Priority</option>
-                                        <option value="Low">Low</option>
-                                        <option value="Medium">Medium</option>
-                                        <option value="High">High</option>
-                                    </select>
-
-                                    <input
-                                        type="number"
-                                        className="form-control mb-3"
-                                        min="0"
-                                        max="100"
-                                        placeholder="Progress"
-                                        value={editTask.progress}
-                                        onChange={(e) =>
-                                            setEditTask({
-                                                ...editTask,
-                                                progress: e.target.value
-                                            })
-                                        }
-                                    />
-                        <select
-                            className = "form-select mb-3"
-                            value={editTask.status || "Pending"}
-                            onChange={(e)=>
-                                setEditTask({
-                                    ...editTask,
-                                    status: e.target.value
-                                })
-                            }
-                        >
-                            <option value="Pending">Pending</option>
-                            <option value="Completed">Completed</option>
-                        </select>
-
-
-
-                                    <input
-                                        type="url"
-                                        className="form-control"
-                                        placeholder="Link"
-                                        value={editTask.link}
-                                        onChange={(e) =>
-                                            setEditTask({
-                                                ...editTask,
-                                                link: e.target.value
-                                            })
-                                        }
-                                    />
-
+            <div className="container flex-grow-1">
+                <div className="row g-4 justify-content-center">
+                    {tasks.map((task) => (
+                        <div className="col-12 col-sm-6 col-md-4" key={task._id}>
+                            <div className={`todo-card priority-${task.priority.toLowerCase()}`}>
+                                <div className="tasktop">
+                                    <span className="category-chip">{task.category}</span>
+                                    <span className={`priority-chip ${task.priority?.toLowerCase()}`}>
+                                        <span className="priority-dot"></span>
+                                        {task.priority}
+                                    </span>
                                 </div>
+                                <h3>Task: {task.task}</h3>
+                                <p className="dscr">Description: {task.description.length > 40 ? `${task.description.slice(0, 40)}...`
+                                    :task.description}
+                                    {task.description.length > 40 && (
+                                        <span
+                                            onClick={() => navigate(`/task/${task._id}`)}
+                                            style={{
+                                                color: "7C5CFC",
+                                                cursor: "pointer",
+                                                fontWeight: "bold",
+                                            }}
+                                        >
+                                            Read More
+                                        </span>
+                                    )}
+                                    </p>
 
-                                <div className="modal-footer">
+                                <div className='time'>
+                                    <p><Calendar /> {new Date(task.date).toLocaleDateString()}</p>
+                                    <p><Clock /> {task.time}</p>
+                                </div>
+                                <div className="progress-container">
+                                    <div className="progress-header">
+                                        <span>{task.progress}%</span>
+                                    </div>
+
+                                    <div className='progress-bar'>
+                                        <div
+                                            className="progress-fill"
+                                            style={{ width: `${task.progress}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div className='icons'>
+                                    <a
+                                        href={task.link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className='open-link'
+                                    >
+                                        Open Link <ExternalLink size={16} />
+                                    </a>
+                                    {/* <p><ExternalLink/>: {task.link}</p> */}
+                                    <div className='task-set'>
+                                        <button onClick={() => {
+                                            setTaskToDelete(task._id);
+                                            setShowDeleteModal(true);
+                                        }}>
+                                            <Trash2 size={20} />
+                                        </button>
+                                        <button onClick={() => handleEdit(task)}>
+                                            <Edit2 size={20} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+
+                    {showDeleteModal && (
+                        <div className="modal-overlay">
+                            <div className="delete-modal">
+
+                                <h4>Delete Task?</h4>
+
+                                <p>
+                                    Are you sure you want to delete the task
+                                </p>
+
+                                <div className="delete-modal-buttons">
 
                                     <button
-                                        type="button"
-                                        className="btn btn-secondary"
-                                        onClick={() => setShowModal(false)}
+                                        className='btn btn-secondary'
+                                        onClick={() => {
+                                            setShowDeleteModal(false);
+                                            setTaskToDelete(null);
+                                        }}
                                     >
                                         Cancel
                                     </button>
 
                                     <button
-                                        type="submit"
-                                        className="btn btn-primary"
+                                        className='btn btn-danger'
+                                        disabled = {deletingId === taskToDelete}
+                                        onClick={async () => {
+                                            await deleteTasks(taskToDelete);
+
+                                            setShowDeleteModal(false);
+                                            setTaskToDelete(null);
+                                        }}
                                     >
-                                        Save Changes
+                                        {deletingId === taskToDelete ? "Deleting..." : "Delete"}
                                     </button>
-
                                 </div>
-
-                            </form>
+                            </div>
 
                         </div>
-                    </div>
+
+                    )}
+                    {showModal && (
+                        <div
+                            className="modal fade show"
+                            style={{ display: "block", backgroundColor: "rgba(0, 0, 0, 0.6)" }}
+                            tabIndex="-1"
+                        >
+                            <div className="modal-dialog modal-dialog-centered modal-lg">
+                                <div className="modal-content">
+
+                                    {/* Header */}
+                                    <div className="modal-header">
+                                        <div>
+                                            <h5 className="modal-title fw-bold">
+                                                Edit Task
+                                            </h5>
+                                            <small className="text-muted">
+                                                Update your task details
+                                            </small>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="btn-close"
+                                            onClick={() => setShowModal(false)}
+                                        ></button>
+                                    </div>
+
+                                    {/* Body */}
+                                    <div className="modal-body">
+
+                                        <div className="row g-3">
+
+                                            {/* Task */}
+                                            <div className="col-12">
+                                                <label className="form-label fw-semibold">
+                                                    Task
+                                                </label>
+
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    value={editTask.task}
+                                                    onChange={(e) =>
+                                                        setEditTask({
+                                                            ...editTask,
+                                                            task: e.target.value
+                                                        })
+                                                    }
+                                                />
+                                            </div>
+
+                                            {/* Description */}
+                                            <div className="col-12">
+                                                <label className="form-label fw-semibold">
+                                                    Description
+                                                </label>
+
+                                                <textarea
+                                                    className="form-control"
+                                                    rows="3"
+                                                    value={editTask.description}
+                                                    onChange={(e) =>
+                                                        setEditTask({
+                                                            ...editTask,
+                                                            description: e.target.value
+                                                        })
+                                                    }
+                                                ></textarea>
+                                            </div>
+
+                                            {/* Date */}
+                                            <div className="col-md-6">
+                                                <label className="form-label fw-semibold">
+                                                    Date
+                                                </label>
+
+                                                <input
+                                                    type="date"
+                                                    className="form-control"
+                                                    min={new Date().toISOString().split("T")[0]}
+                                                    value={editTask.date}
+                                                    onChange={(e) =>
+                                                        setEditTask({
+                                                            ...editTask,
+                                                            date: e.target.value
+                                                        })
+                                                    }
+                                                />
+                                            </div>
+
+                                            {/* Time */}
+                                            <div className="col-md-6">
+                                                <label className="form-label fw-semibold">
+                                                    Time
+                                                </label>
+
+                                                <input
+                                                    type="time"
+                                                    className="form-control"
+                                                    value={editTask.time}
+                                                    onChange={(e) =>
+                                                        setEditTask({
+                                                            ...editTask,
+                                                            time: e.target.value
+                                                        })
+                                                    }
+                                                />
+                                            </div>
+
+                                            {/* Category */}
+                                            <div className="col-md-6">
+                                                <label className="form-label fw-semibold">
+                                                    Category
+                                                </label>
+
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    value={editTask.category}
+                                                    onChange={(e) =>
+                                                        setEditTask({
+                                                            ...editTask,
+                                                            category: e.target.value
+                                                        })
+                                                    }
+                                                />
+                                            </div>
+
+                                            {/* Priority */}
+                                            <div className="col-md-6">
+                                                <label className="form-label fw-semibold">
+                                                    Priority
+                                                </label>
+
+                                                <select
+                                                    className="form-select"
+                                                    value={editTask.priority}
+                                                    onChange={(e) =>
+                                                        setEditTask({
+                                                            ...editTask,
+                                                            priority: e.target.value
+                                                        })
+                                                    }
+                                                >
+                                                    <option value="">Select priority</option>
+                                                    <option value="Low">Low</option>
+                                                    <option value="Medium">Medium</option>
+                                                    <option value="High">High</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Progress */}
+                                            <div className="col-md-6">
+                                                <label className="form-label fw-semibold">
+                                                    Progress (%)
+                                                </label>
+
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="100"
+                                                    className="form-control"
+                                                    value={editTask.progress}
+                                                    onChange={(e) => {
+                                                        setEditTask({
+                                                            ...editTask,
+                                                            progress: e.target.value
+                                                        })
+                                                        setProgressError("");
+                                                    }}
+                                                />
+                                                {progressError && (
+                                                    <p className="text-danger mt-1">
+                                                        {progressError}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Status */}
+                                            <div className="col-md-6">
+                                                <label className="form-label fw-semibold">
+                                                    Status
+                                                </label>
+
+                                                <select
+                                                    className="form-select"
+                                                    value={editTask.status}
+                                                    onChange={(e) =>
+                                                        setEditTask({
+                                                            ...editTask,
+                                                            status: e.target.value
+                                                        })
+                                                    }
+                                                >
+                                                    <option value="Pending">Pending</option>
+                                                    <option value="In Progress">In Progress</option>
+                                                    <option value="Completed">Completed</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Link */}
+                                            <div className="col-12">
+                                                <label className="form-label fw-semibold">
+                                                    Link
+                                                </label>
+
+                                                <input
+                                                    type="url"
+                                                    className="form-control"
+                                                    placeholder="https://example.com"
+                                                    value={editTask.link}
+                                                    onChange={(e) =>
+                                                        setEditTask({
+                                                            ...editTask,
+                                                            link: e.target.value
+                                                        })
+                                                    }
+                                                />
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    {/* Footer */}
+                                    <div className="modal-footer">
+
+                                        <button
+                                            type="button"
+                                            className="btn btn-light border"
+                                            onClick={() => setShowModal(false)}
+                                        >
+                                            Cancel
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="btn btn-primary px-4"
+                                            onClick={handleUpdate}
+                                        >
+                                            Update Task
+                                        </button>
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
-            <div className="btns">
-                <button onClick={previousPage}
-                disabled={currentPage===1}
-                 style = {{backgroundColor: "#1C2A27", color:"white"}}
-                >
-                    Previous
-                </button>
-
-                <button className="active"
-                    >
-                    {currentPage}
-                </button>
-
-
-                <button onClick={nextPage}
-                    style = {{backgroundColor: "#1C2A27", color:"white"}}
-                    disabled={!lastDoc || currentPage >= count_pages}>
-                    Next
-                </button>
             </div>
-        </div >
+            {totalPages != 0 ? (
+                <div
+                    className='pagination'
+                >
+                    <button
+                        className="bg-violet-600 text-white hover:bg-violet-700 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed px-4 py-2 rounded transition-colors"
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={currentPage == 1}
+                    >
+                        Previous
+                    </button>
+
+                    <button
+                        style={{
+                            backgroundColor: "#7c3aed",
+                            color: "white",
+                            border: "1px solid #1CA27",
+                            padding: "6px 12px",
+                            borderRadius: "5px"
+                        }}
+                    >
+                        {currentPage}
+                    </button>
+
+                    <button
+                        className="bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all px-4 py-2 rounded"
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={currentPage == totalPages}
+                    >Next
+                    </button>
+
+                </div>
+            ) : (<div className="ntasks"><h1>No tasks</h1></div>)}
+        </div>
     );
 }

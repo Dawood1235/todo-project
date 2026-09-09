@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { getAuth, createUserWithEmailAndPassword,signOut } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from "../firebase";
-import { app } from "../firebase";
-import { useNavigate } from 'react-router-dom';
+// import { getAuth, createUserWithEmailAndPassword,signOut } from 'firebase/auth';
+// import { doc, setDoc } from 'firebase/firestore';
+// import { db } from "../firebase";
+// import { app } from "../firebase";
+import { useNavigate,Link } from 'react-router-dom';
 import * as yup from "yup";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import axios from "axios";
 
 const schema = yup.object({
   firstName: yup.string().required("Please enter your first name"),
@@ -14,8 +15,10 @@ const schema = yup.object({
   password: yup.string().required("Please enter your password"),
 });
 
+//   const auth = getAuth(app);
 
 const SignUpPage = () => {
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -23,52 +26,58 @@ const SignUpPage = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-
-  const auth = getAuth(app);
   const navigate = useNavigate();
+
 
   const createUser = async () => {
     setLoading(true);
     try {
       await schema.validate({ firstName, lastName, email, password }, { abortEarly: false });
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
 
-      await setDoc(doc(db, "users", user.uid), {
-        firstName: firstName,
-        lastName: lastName,
-        lowerfirstName: firstName.toLowerCase().trim(),
-        lowerlastName: lastName.toLowerCase().trim(),
-        email: user.email,
-        role: "user"
-      });
+      const response = await axios.post("http://localhost:5000/signup",
+        {
+          firstName,
+          lastName,
+          email,
+          password
+        }
+      );
 
-      await signOut(auth);
-      setLoading(false);
-      alert("Succesfully added");
+      console.log(response.data);
+
+      alert("Successfully added");
+
       navigate("/Signin");
+
     } catch (error) {
-      setLoading(false);
       if (error instanceof yup.ValidationError) {
         const newErrors = {};
 
         error.inner.forEach((err) => {
-          newErrors[err.path] = err.message
+          newErrors[err.path] = err.message;
         });
+
         setErrors(newErrors);
-        console.log(newErrors);
+
       }
       else {
-        console.log("error signing up");
+        console.log(
+          error.response?.data?.message || error.message
+        );
       }
-    }
 
+    } finally {
+      setLoading(false);
+    }
   };
+
+
+  //   };
 
   return (
 
 
-
+    <div className='sign-up'>
     <div className="container d-flex justify-content-center align-items-center vh-100">
       <div className="card shadow p-4" style={{ width: "400px" }}>
         <h2 className="text-center mb-4">Sign Up</h2>
@@ -139,7 +148,12 @@ const SignUpPage = () => {
         >
           {loading ? "Signing up..." : "Sign up"}
         </button>
+        <p className="text-center mt-3 mb-0">
+            Already have an account?{" "}
+            <Link to="/Signin">Sign In</Link>
+          </p>
       </div>
+    </div>
     </div>
   );
 

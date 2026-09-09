@@ -1,14 +1,15 @@
 import Submit from "./Submit";
 import { useState,useEffect } from 'react';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from "../firebase";
-import { auth } from "../firebase";
+// import { addDoc, collection } from 'firebase/firestore';
+// import { db } from "../firebase";
+// import { auth } from "../firebase";
 import * as yup from "yup";
-import { serverTimestamp } from "firebase/firestore";
+// import { serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import SPLoader from "./Loader"; 
 import Navbar from "../Navbar-2";
 import { Card, Button } from "react-bootstrap";
+import axios from "axios";
 
 export default function AddData() {
     const navigate = useNavigate();
@@ -42,11 +43,10 @@ export default function AddData() {
     }
 
     )
-
+    
     async function handleSubmit(e) {
         e.preventDefault();
         try {
-
             await schema.validate({
                 task,
                 description,
@@ -57,46 +57,82 @@ export default function AddData() {
                 progress: prg,
                 link,
                 status: "Pending",
-            }, {abortEarly:false},
-            );
+            }, {abortEarly:false});
 
             setLoading(true);
-            const docRef = await addDoc(collection(db, "tasks"), {
-                task: task.trim(),
-                taskLower: task.trim().toLowerCase(),
-                description,
-                date,
-                time,
-                category,
-                priority,
-                reminder,
-                progress: prg,
-                link,
-                uid: auth.currentUser.uid,
-                status: "Pending",
+      
+    const data = {task,description,date,time,category,priority,reminder,progress:prg,link,status:"Pending"};
+    console.log("DATA BEING SENT:", data);
 
-                createdAt: serverTimestamp()
-            });
-            setLoading(false);
-            setErrors({});
-            alert("Task added successfully!");
-            navigate("/");
-            console.log("Document ID:", docRef.id);
-        } catch (error) {
-            if(error instanceof yup.ValidationError){
-                const newErrors = {};
+    const token = localStorage.getItem("token");
 
-                error.inner.forEach((err)=>{
-                    newErrors[err.path] = err.message
-            });
-            setErrors(newErrors);
-            console.log(newErrors);
-            }
-            else{
-                console.log("error adding doc");
+    const resp = await axios.post("http://localhost:5000/api/tasks", data,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`
             }
         }
+    );
+    console.log("Backend response:", resp.data);
+
+} catch(error){
+            if (error instanceof yup.ValidationError) {
+            const newErrors = {};
+
+            error.inner.forEach((err) => {
+                newErrors[err.path] = err.message;
+            });
+
+            setErrors(newErrors);
+            console.log(newErrors);
+        } else {
+            console.error("Axios error:", error);
+        }
     }
+    finally{
+        setTimeout(() => {
+            setLoading(false);
+        }, 1000);
+    }
+}
+
+    //         setLoading(true);
+    //         const docRef = await addDoc(collection(db, "tasks"), {
+    //             task: task.trim(),
+    //             taskLower: task.trim().toLowerCase(),
+    //             description,
+    //             date,
+    //             time,
+    //             category,
+    //             priority,
+    //             reminder,
+    //             progress: prg,
+    //             link,
+    //             uid: auth.currentUser.uid,
+    //             status: "Pending",
+
+    //             createdAt: serverTimestamp()
+    //         });
+    //         setLoading(false);
+    //         setErrors({});
+    //         alert("Task added successfully!");
+    //         navigate("/");
+    //         console.log("Document ID:", docRef.id);
+    //     } catch (error) {
+    //         if(error instanceof yup.ValidationError){
+    //             const newErrors = {};
+
+    //             error.inner.forEach((err)=>{
+    //                 newErrors[err.path] = err.message
+    //         });
+    //         setErrors(newErrors);
+    //         console.log(newErrors);
+    //         }
+    //         else{
+    //             console.log("error adding doc");
+    //         }
+    //     }
+    // }
 
 
     const [task, setTask] = useState("");
@@ -139,16 +175,18 @@ export default function AddData() {
     return (
         <div>
             <Navbar/>
-            <div className="d-flex flex-column align-items-center color-blue vh:100">
+            <div className="d-flex flex-column align-items-center color-blue vh:100" style={{backgroundColor:"#0D0F1A"}}>
             {/* <Card className="p-4 shadow" style={{width: "500px" , backgroundColor: "rgb(189, 174, 174)"}}> */}
-            <h2 >Add New Tasks</h2>
+            <h2 style={{color: "white", marginTop:"20px", marginBottom: "20px"}}>Add New Tasks</h2>
 
             <form id="todofrm" className="card my-card p-4 mb-4"
-                style={{ backgroundColor: "rgb(189, 174, 174)", width: "400px" }}
+                style={{color:"white",
+                    backgroundColor: "#151824", width: "400px" }}
                 onSubmit={handleSubmit}>
 
                 <label htmlFor="task">Task:</label><br />
                 <input type="text"
+                    className={`form-control ${task ?"border-primary-shadow": ""}`}
                     value={task}
                     onChange={(e) =>{ setTask(e.target.value);
                         setErrors((prev)=> ({ ...prev, task:""}));
@@ -159,6 +197,7 @@ export default function AddData() {
 
                 <label htmlFor="description">Description:</label><br />
                 <textarea id="description"
+                    className={`form-control ${task ?"border-primary-shadow": ""}`}
                     value={description}
                     onChange={(e) => {setDesc(e.target.value);
                              setErrors((prev)=> ({ ...prev, description:""}));
@@ -169,7 +208,9 @@ export default function AddData() {
 
                 <label htmlFor="date">Task Date:</label><br />
                 <input type="date"
+                    className={`form-control ${task ?"border-primary-shadow": ""}`}
                     value={date}
+                    min={new Date().toISOString().split("T")[0]}
                     onChange={(e) => {setDate(e.target.value);
                             setErrors((prev)=> ({ ...prev, date:""}));
                     }}
@@ -179,6 +220,7 @@ export default function AddData() {
 
                 <label htmlFor="time">Start Time:</label><br />
                 <input type="time"
+                    className={`form-control ${task ?"border-primary-shadow": ""}`}
                     value={time}
                     onChange={(e) => {
                         setTime(e.target.value);
@@ -261,17 +303,24 @@ export default function AddData() {
                 <br /><br />
 
                 <label htmlFor="progress">Progress:</label><br />
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <input type="range"
                     value={prg}
                     onChange={(e) => {setPrg(Number(e.target.value))
                             setErrors((prev)=> ({ ...prev, progress:""}));
                     }}
                     id="progress" min="0" max="100" />
+                    
+                    <span style = {{color: "white", minwidth: "45px"}}>
+                        {prg}%
+                    </span>
+                  </div>
                     {errors.progress && <p style={{ color: "red" }}>{errors.progress}</p>}
                 <br /><br />
 
                 <label htmlFor="link">Related Link:</label><br />
                 <input type="url" id="link"
+                    className={`form-control ${task ?"border-primary-shadow": ""}`}
                     value={link}
                     onChange={(e) => {setLink(e.target.value)
                          setErrors((prev)=> ({ ...prev, link:""}));
@@ -281,11 +330,7 @@ export default function AddData() {
                     {errors.link && <p style={{ color: "red" }}>{errors.link}</p>}
                 <br /><br />
 
-                    <Submit />
-                    {loading && (
-                         <p style={{ color: "blue", textAlign: "center" }}>
-                        Loading...
-                        </p>)}
+                    <Submit loading={loading} />
 
 
             </form>
@@ -293,7 +338,4 @@ export default function AddData() {
         </div>
     </div>);
 }
-
-
-
 

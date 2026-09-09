@@ -29,98 +29,125 @@
 
 import { Navigate } from "react-router-dom";
 
-import { auth, db } from "./firebase";
+// import { auth, db } from "./firebase";
 
-import { doc, getDoc } from "firebase/firestore";
+// import { doc, getDoc } from "firebase/firestore";
 
-import { onAuthStateChanged } from "firebase/auth";
+// import { onAuthStateChanged } from "firebase/auth";
 
 import { useEffect, useState } from "react";
 import SPLoader from "./pages/Loader";
 
 
-function ProtectedRoute({children,role}){
+function ProtectedRoute({ children, role }) {
 
-    const [loading,setLoading]=useState(true);
+    const token = localStorage.getItem("token");
+    const userString = localStorage.getItem("user");
 
-    const [allowed,setAllowed]=useState(false);
-
-    const [authenticated,setAuthenticated] = useState(false);
-
-    useEffect(()=>{
-
-        const unsubscribe=
-        onAuthStateChanged(auth,async(user)=>{
-
-            if(!user){
-
-                setAuthenticated(false);
-
-                setAllowed(false);
-
-                setLoading(false);
-
-                return;
-
-            }
-
-            setAuthenticated(true);
-
-            const docRef=doc(db,"users",user.uid);
-
-            const snapshot=await getDoc(docRef);
-
-            if(snapshot.exists()){
-
-                const data=snapshot.data();
-                console.log("User document:", data);
-                console.log("Firestore role:", data.role);
-                console.log("Required role:", role);
-
-                if( data.role === "admin" || data.role === role){
-
-                    setAllowed(true);
-                }
-                else{
-
-                    setAllowed(false);
-
-                }
-
-            }
-
-            else{
-
-                setAllowed(false);
-
-            }
-
-            setLoading(false);
-
-        });
-
-        return unsubscribe;
-
-    },[role]);
-
-    if(loading){
-
-            return <SPLoader />;
-
+    if (!token || !userString) {
+        return <Navigate to="/Signin" replace />
     }
 
-    if(!authenticated){
+    let user;
 
-        return <Navigate to="/Signin"/>;
+    try {
+        user = JSON.parse(userString);
+    } catch (error) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
 
+        return <Navigate to="/Signin" replace />
     }
 
-    if(!allowed){
-        return  <Navigate to="/unauthorized"/>
+
+    if (role && user.role !== role) {
+        return <Navigate to="/unauthorized" replace />
     }
 
-    return children
-
+    return children;
 }
+
+// }
+//     const [loading,setLoading]=useState(true);
+
+//     const [allowed,setAllowed]=useState(false);
+
+//     const [authenticated,setAuthenticated] = useState(false);
+
+//     useEffect(()=>{
+
+//         const unsubscribe=
+//         onAuthStateChanged(auth,async(user)=>{
+
+//             if(!user){
+
+//                 setAuthenticated(false);
+
+//                 setAllowed(false);
+
+//                 setLoading(false);
+
+//                 return;
+
+//             }
+
+//             setAuthenticated(true);
+
+//             const docRef=doc(db,"users",user.uid);
+
+//             const snapshot=await getDoc(docRef);
+
+//             if(snapshot.exists()){
+
+//                 const data=snapshot.data();
+//                 console.log("User document:", data);
+//                 console.log("Firestore role:", data.role);
+//                 console.log("Required role:", role);
+
+//                 if( data.role === "admin" || data.role === role){
+
+//                     setAllowed(true);
+//                 }
+//                 else{
+
+//                     setAllowed(false);
+
+//                 }
+
+//             }
+
+//             else{
+
+//                 setAllowed(false);
+
+//             }
+
+//             setLoading(false);
+
+//         });
+
+//         return unsubscribe;
+
+//     },[role]);
+
+//     if(loading){
+
+//             return <SPLoader />;
+
+//     }
+
+//     if(!authenticated){
+
+//         return <Navigate to="/Signin"/>;
+
+//     }
+
+//     if(!allowed){
+//         return  <Navigate to="/unauthorized"/>
+//     }
+
+//     return children
+
+// }
 
 export default ProtectedRoute;

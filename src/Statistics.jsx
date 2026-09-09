@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import { Doughnut, Bar } from "react-chartjs-2";
 import SPLoader from "./pages/Loader";
 import Navbar from "./Navbar";
-
+import axios from "axios";
+import { useMemo } from "react";
 
 import {
     Chart as ChartJS,
@@ -14,12 +15,12 @@ import {
     BarElement
 } from "chart.js";
 
-import {
-    collection,
-    getDocs
-} from "firebase/firestore";
+// import {
+//     collection,
+//     getDocs
+// } from "firebase/firestore";
 
-import { db } from "./firebase";
+// import { db } from "./firebase";
 
 ChartJS.register(
     ArcElement,
@@ -31,84 +32,151 @@ ChartJS.register(
 );
 
 export default function Statistics() {
-    const [loading, setLoading] = useState(false);
-    const [users, setUsers] = useState([]);
-    const [tasks, setTasks] = useState([]);
-    const totalUsers = users.filter((user) => user.role === "user").length;
-    const totalAdmins = users.filter((user) => user.role === "admin").length;
+    const initialState = {
+        loading: false,
+        totalUsers: 0,
+        totalAdmins: 0,
+        totalCompleted: 0,
+        totalPending: 0,
+        error: null
+    }
+
+    function reducer(state,action){
+        switch(action.type){
+
+            case "FETCH_START":
+                return {
+                    ...state,
+                    loading:true,
+                    error:null
+                };
+            case "FETCH_SUCCESS":
+                return {
+                    ...state,
+                    loading: false,
+                    totalUsers: action.payload.totalUsers,
+                    totalAdmins: action.payload.totalAdmins,
+                    totalCompleted: action.payload.totalCompleted,
+                    totalPending: action.payload.totalPending
+                }
+            case "FETCH_ERROR":
+                return{
+                    ...state,
+                    loading: false,
+                    error: action.payload
+                }
+            default: 
+                return state;
+        }
+
+    }
+
+    const [state, dispatch] = useReducer(reducer, initialState);
+
 
     useEffect(() => {
         const fetchTasks = async () => {
-            const snapshot = await getDocs(collection(db, "tasks"));
+            try {
+                dispatch({type: "FETCH_START"});
+                const token = localStorage.getItem("token");
+                const response = await axios.get("http://localhost:5000/admin/stats",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+                console.log("WHOLE RESPONSE:", response);
+                console.log("RESPONSE DATA:", response.data);
+                console.log("PENDING:", response.data.totalPending);
+                console.log("COMPLETED:", response.data.totalCompleted);
 
-            const tasksList = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+                console.log(response.data);
 
-            setTasks(tasksList);
+                dispatch({type:
+                    "FETCH_SUCCESS",
+                    payload: response.data
+                })
+
+            } catch (error) {
+                dispatch({
+                    type: "FETCH_ERROR",
+                    payload: error.message
+                })
+            }
+            // const snapshot = await getDocs(collection(db, "tasks"));
+
+            // const tasksList = snapshot.docs.map(doc => ({
+            //     id: doc.id,
+            //     ...doc.data()
+            // }));
+
+            // setTasks(tasksList);
         };
+
 
         fetchTasks();
     }, []);
 
-    const CompletedTasks = tasks.filter(task => task.status === "Completed").length;
+    // const CompletedTasks = tasks.filter(task => task.status === "Completed").length;
 
-    const PendingTasks = tasks.filter(task => task.status === "Pending").length;
+    // const PendingTasks = tasks.filter(task => task.status === "Pending").length;
 
-    const roleChartData = {
+    const roleChartData = useMemo(()=>{
+        return{
         labels: ["Users", "Admin"],
         datasets: [
             {
                 label: "Number of Accounts",
-                data: [totalUsers, totalAdmins],
+                data: [state.totalUsers, state.totalAdmins],
                 borderWidth: 1,
                 backgroundColor: [
-                    "rgba(88, 233, 100, 0.5)",
+                    "rgba(124, 92, 252, 1)",
                     "rgba(255,0,0,1)"
                 ]
             }
         ]
-    };
+        }
+    }, [state.totalUsers, state.totalAdmins]);
 
-    useEffect(() => {
-        setLoading(true);
-        const fetchUsers = async () => {
+    // useEffect(() => {
+    //     setLoading(true);
+    //     const fetchUsers = async () => {
 
-            try {
-                console.log("fetchSignInMethodsForEmail..");
-                const querySnapshot = await getDocs(
-                    collection(db, "users")
-                );
+    //         try {
+    //             console.log("fetchSignInMethodsForEmail..");
+    //             const querySnapshot = await getDocs(
+    //                 collection(db, "users")
+    //             );
 
-                const usersList = querySnapshot.docs.map(
-                    (doc) => ({
-                        id: doc.id,
-                        ...doc.data()
-                    })
-                );
+    //             const usersList = querySnapshot.docs.map(
+    //                 (doc) => ({
+    //                     id: doc.id,
+    //                     ...doc.data()
+    //                 })
+    //             );
 
-                setUsers(usersList);
+    //             setUsers(usersList);
 
-            } catch (error) {
+    //         } catch (error) {
 
-                console.error(
-                    "error fetching users:", error
-                );
-            }
-            finally {
-                setLoading(false);
-            }
-        };
-        fetchUsers();
-    }, [])
+    //             console.error(
+    //                 "error fetching users:", error
+    //             );
+    //         }
+    //         finally {
+    //             setLoading(false);
+    //         }
+    //     };
+    //     fetchUsers();
+    // }, [])
 
-    if (loading) {
+    if (state.loading) {
         return <SPLoader />
     }
 
     return (
-        <div>
+        <div className="style-stats">
             <Navbar /><div className="statistics">
                 <h1>Statistics</h1>
 
@@ -116,17 +184,17 @@ export default function Statistics() {
 
                     <div className="stat-card completed-card">
                         <h3>Completed Tasks</h3>
-                        <p>{CompletedTasks}</p>
+                        <p>{state.totalCompleted}</p>
                     </div>
 
                     <div className="stat-card pending-card">
                         <h3>Pending Tasks</h3>
-                        <p>{PendingTasks}</p>
+                        <p>{state.totalPending}</p>
                     </div>
-                    
-                <div className="stat-card">
-                <h2> Total Users : {users.length} </h2>
-                </div>
+
+                    <div className="stat-card">
+                        <h2> Total Users : {state.totalUsers} </h2>
+                    </div>
 
 
                 </div>

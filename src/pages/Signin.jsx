@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { app } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
-import SPLoader from "./Loader";
+import { useNavigate,Link } from 'react-router-dom';
+// import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+// import { app } from "../firebase";
+// import { doc, getDoc } from "firebase/firestore";
+// import { db } from "../firebase";
+// import SPLoader from "./Loader";
 import * as yup from 'yup';
+import axios from "axios";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const auth = getAuth(app);
+// const auth = getAuth(app);
 
 const schema = yup.object({
   email: yup.string().required("Please enter your email"),
@@ -29,21 +32,35 @@ const SignInPage = () => {
     setLoading(true);
     try {
       await schema.validate({ email, password }, { abortEarly: false });
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      const snapshot = await getDoc(doc(db, "users", userCredential.user.uid));
+      // const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      // const snapshot = await getDoc(doc(db, "users", userCredential.user.uid));
 
-      const data = snapshot.data();
+      // const data = snapshot.data();
+
+      const response = await axios.post("http://localhost:5000/signin",
+        {
+          email,
+          password
+        }
+      );
+
+      console.log(response.data);
+
+      localStorage.setItem("token", response.data.token);
+
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+
+
       setLoading(false);
 
-        alert("Successfully signed in");
-        if (data.role === "admin") {
-          navigate("/pages/Admin-dashboard");
-        } else {
-          navigate("/");
-        }
+      // alert("Successfully signed in");
+      if (response.data.user.role === "admin") {
+        navigate("/pages/Admin-dashboard");
+      } else {
+        navigate("/");
+      }
 
     } catch (error) {
-      setLoading(false);
       if (error instanceof yup.ValidationError) {
         const newErrors = {};
 
@@ -54,11 +71,25 @@ const SignInPage = () => {
         console.log(newErrors);
       }
       else {
-        console.log("error signing up");
+        if (!navigator.onLine) {
+          toast.error("No internet connection.");
+        } else if (error.code === "ERR_NETWORK") {
+          toast.error("Cannot connect to the server.");
+        }
+        else {
+          toast.error(error.response?.data?.message ||
+            "Invalid email or password");
+        }
       }
+    } finally {
+      setLoading(false);
     }
+
   };
-    return (
+  return (
+    <>
+      <ToastContainer />
+     <div className="sign-page">
       <div className="container d-flex justify-content-center align-items-center vh-100">
         <div className="card shadow p-4" style={{ width: "400px" }}>
           <h2 className="text-center mb-4">Sign In</h2>
@@ -105,12 +136,14 @@ const SignInPage = () => {
 
           <p className="text-center mt-3 mb-0">
             Don't have an account?{" "}
-            <a href="/Signup">Sign Up</a>
+            <Link to="/Signup">Sign Up</Link>
           </p>
         </div>
       </div>
-    );
+      </div>
+    </>
+  );
 
-  };
+};
 
-  export default SignInPage;
+export default SignInPage;
