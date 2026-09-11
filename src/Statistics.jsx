@@ -120,38 +120,6 @@ export default function Statistics() {
         }
     }, [state.totalUsers, state.totalAdmins]);
 
-    // useEffect(() => {
-    //     setLoading(true);
-    //     const fetchUsers = async () => {
-
-    //         try {
-    //             console.log("fetchSignInMethodsForEmail..");
-    //             const querySnapshot = await getDocs(
-    //                 collection(db, "users")
-    //             );
-
-    //             const usersList = querySnapshot.docs.map(
-    //                 (doc) => ({
-    //                     id: doc.id,
-    //                     ...doc.data()
-    //                 })
-    //             );
-
-    //             setUsers(usersList);
-
-    //         } catch (error) {
-
-    //             console.error(
-    //                 "error fetching users:", error
-    //             );
-    //         }
-    //         finally {
-    //             setLoading(false);
-    //         }
-    //     };
-    //     fetchUsers();
-    // }, [])
-
     if (state.loading) {
         return <SPLoader />
     }
