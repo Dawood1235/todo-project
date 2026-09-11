@@ -15,13 +15,6 @@ import {
     BarElement
 } from "chart.js";
 
-// import {
-//     collection,
-//     getDocs
-// } from "firebase/firestore";
-
-// import { db } from "./firebase";
-
 ChartJS.register(
     ArcElement,
     Tooltip,
