@@ -1,32 +1,3 @@
-// import {Outlet, Navigate } from "react-router-dom";
-// import { getAuth } from "firebase/auth";
-// import { useContext } from "react";
-// import { userContext } from "./ContextProvider";
-
-// // import { doc, getDoc } from 'firebase/firestore';
-// // import { db } from "../firebase";
-
-//  const ProtectedRoute = ( { children,roles } )=>{
-
-//    const{role, user} = useContext(userContext);
-
-//     if(!user){
-//        return <Navigate to="/pages/Signin" replace/>
-//     }
-
-//    //  if((users.role) !== role){
-//    //       return <Navigate to="/Unauthhorized" replace/>        
-//    //  }
-
-//     if(!roles.includes(role)){
-//          return <Navigate to="/Unauthhorized" replace/>         
-//     }
-
-//    return children
-// }
-// export default ProtectedRoute;
-
-
 import { Navigate } from "react-router-dom";
 
 // import { auth, db } from "./firebase";
