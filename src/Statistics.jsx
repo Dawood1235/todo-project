@@ -97,23 +97,11 @@ export default function Statistics() {
                     payload: error.message
                 })
             }
-            // const snapshot = await getDocs(collection(db, "tasks"));
-
-            // const tasksList = snapshot.docs.map(doc => ({
-            //     id: doc.id,
-            //     ...doc.data()
-            // }));
-
-            // setTasks(tasksList);
         };
 
 
         fetchTasks();
     }, []);
-
-    // const CompletedTasks = tasks.filter(task => task.status === "Completed").length;
-
-    // const PendingTasks = tasks.filter(task => task.status === "Pending").length;
 
     const roleChartData = useMemo(()=>{
         return{
